@@ -45,3 +45,13 @@ export interface TaskView {
   updated_ms: number;
 }
 
+export interface Quote {
+  seller: string;
+  item: string;
+  category: string;
+  description: string;
+  price: string;
+  expires_at_ms: number;
+  nonce: string;
+}
+
