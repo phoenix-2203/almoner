@@ -24,3 +24,43 @@ const post = async (path: string, body: unknown) => {
   return j;
 };
 
+/**
+ * Ask each seller for a list quote, then counter at ~80% of the cheapest list
+ * price, capped at the mandate's per-purchase limit. Returns signed offers,
+ * best first: proven sellers (higher delivery score) before cheaper unknowns.
+ */
+export async function negotiate(
+  task: TaskView,
+  sellers: Record<string, string>, // name -> item URL at that seller
+  onChain: SellerView[],
+  log: (s: string) => void = () => {},
+): Promise<Offer[]> {
+  const lists: { name: string; price: bigint }[] = [];
+  for (const [name, item] of Object.entries(sellers)) {
+    try {
+      const q = await post(`/${name}/quote`, { item });
+      lists.push({ name, price: BigInt(q.quote.price) });
+      log(`  ${name}: list ${q.quote.price}`);
+    } catch (e: any) {
+      log(`  ${name}: no quote (${e.message})`);
+    }
+  }
+  if (!lists.length) return [];
+  const cheapest = lists.reduce((a, b) => (a.price < b.price ? a : b)).price;
+  const ceiling = BigInt(task.rules.max_per_purchase);
+  let target = (cheapest * 80n) / 100n;
+  if (target > ceiling) target = ceiling;
+
+  const offers: Offer[] = [];
+  for (const { name } of lists) {
+    const q = await post(`/${name}/quote`, { item: sellers[name], offer: target.toString() });
+    const rep = onChain.find((s) => s.account_id === q.quote.seller);
+    log(`  ${name}: offered ${target} -> ${q.note} at ${q.quote.price}`);
+    offers.push({ sellerName: name, signed: { quote: q.quote, signature: q.signature }, note: q.note, reputationBps: rep?.delivery_score_bps ?? 0, settled: rep?.settled ?? 0 });
+  }
+  return offers
+    .filter((o) => !onChain.find((s) => s.account_id === o.signed.quote.seller)?.on_hold)
+    .filter((o) => preflight(task.rules, o.signed.quote).ok)
+    .sort((a, b) => b.reputationBps - a.reputationBps || Number(BigInt(a.signed.quote.price) - BigInt(b.signed.quote.price)));
+}
+
