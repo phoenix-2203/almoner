@@ -360,3 +360,17 @@ fn missed_delivery_refunds_after_window() {
     assert_eq!(w.v.get_seller(w.junk.account.clone()).unwrap().stats.missed, 1);
 }
 
+#[test]
+fn silent_buyer_auto_releases_to_seller() {
+    let mut w = setup();
+    let p = buy(&mut w, "honest", "https://datadesk/r", "report", USDC / 10, "n1", "k1");
+    as_account(&w.honest.account, T0 + 2_000, NearToken::from_yoctonear(0));
+    let d = w.v.deliver(p.id, "h".into());
+    as_account(&acc("anyone.testnet"), d.review_by_ms + 1, NearToken::from_yoctonear(0));
+    let _ = w.v.settle_expired(p.id);
+    as_callback(d.review_by_ms + 2, true);
+    let paid = w.v.on_payout(p.id, "AUTO_RELEASED".into());
+    assert_eq!(paid.status, PurchaseStatus::Paid);
+    assert_eq!(w.v.get_seller(w.honest.account.clone()).unwrap().stats.auto_released, 1);
+}
+
