@@ -49,6 +49,14 @@
       card("Decisions", String(v.purchases)),
     ].join("");
 
+    if (cfg.challenge) {
+      const tries = purchases.filter((p) => p.task_id === cfg.challenge.task);
+      const moved = tries.filter((p) => !["Declined", "Rejected"].includes(p.status)).length;
+      $("challenge").innerHTML = `<div class="challenge"><strong>Public challenge:</strong> this vault's agent key is published.
+        <a href="${esc(cfg.challenge.url)}" target="_blank" rel="noopener">Take the key and try to move the money.</a>
+        <span class="chip ${moved ? "bad" : "ok"}">${tries.length} recorded attempt${tries.length === 1 ? "" : "s"} · ${moved} got through</span></div>`;
+    }
+
     $("tasks").innerHTML = (await Promise.all(tasks.map(async (t) => {
       const json = await view("get_mandate_json", { task_id: t.id });
       const ok = (await sha256hex(json)) === t.mandate_hash;
