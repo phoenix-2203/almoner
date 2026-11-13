@@ -1004,4 +1004,24 @@ impl Vault {
             updated_ms: t.updated_ms,
         }
     }
+
+    fn seller_view(s: &Seller) -> SellerView {
+        let st = &s.stats;
+        let good = st.delivered_ok + st.auto_released;
+        let settled = good + st.rejected + st.missed;
+        SellerView {
+            account_id: s.account_id.clone(),
+            name: s.name.clone(),
+            about: s.about.clone(),
+            quote_key: String::from(
+                &PublicKey::from_parts(CurveType::ED25519, s.quote_key.to_vec()).unwrap_or_else(|_| env::abort()),
+            ),
+            on_hold: s.on_hold,
+            hold_reason: s.hold_reason.clone(),
+            registered_ms: s.registered_ms,
+            stats: st.clone(),
+            delivery_score_bps: (good * 10_000).checked_div(settled).unwrap_or(0),
+            settled,
+        }
+    }
 }
