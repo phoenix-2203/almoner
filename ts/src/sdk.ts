@@ -205,4 +205,8 @@ export class AlmonerVault {
   constructor(readonly vaultId: string, readonly rpcUrl: string) {
     this.provider = new JsonRpcProvider({ url: rpcUrl });
   }
+
+  view<T>(method: string, args: Record<string, unknown> = {}): Promise<T> {
+    return this.provider.callFunction({ contractId: this.vaultId, method, args }) as Promise<T>;
+  }
 }
