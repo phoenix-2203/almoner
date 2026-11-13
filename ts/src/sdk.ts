@@ -139,6 +139,8 @@ export interface LogEntry {
 export const sha256hex = (data: string | Uint8Array) => createHash("sha256").update(data).digest("hex");
 
 export const usdc = (amount: number) => BigInt(Math.round(amount * 10 ** USDC_DECIMALS)).toString();
+/** yoctoNEAR to a short NEAR string. A key's allowance is spent by the gas a call attaches (about 0.001 NEAR per TGas on testnet). */
+export const fmtNear = (yocto: bigint) => (yocto < 0n ? "unlimited" : (Number(yocto / 10n ** 20n) / 10000).toFixed(3) + " NEAR");
 export const fmtUsdc = (base: string | bigint) => {
   const n = Number(BigInt(base)) / 10 ** USDC_DECIMALS;
   return `${n.toFixed(n < 1 ? 3 : 2)} tUSDC`;
@@ -222,6 +224,30 @@ export class AlmonerVault {
   verifyLog = () => this.view<boolean>("verify_log");
   getMandateJson = (task_id: number) => this.view<string | null>("get_mandate_json", { task_id });
 
+  /** Remaining gas allowance (yoctoNEAR) of a function-call key on the vault, or null if the key is gone. */
+  async keyAllowance(publicKey: string): Promise<bigint | null> {
+    const res = await fetch(this.rpcUrl, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "query", params: { request_type: "view_access_key", finality: "optimistic", account_id: this.vaultId, public_key: publicKey } }),
+    });
+    const j: any = await res.json();
+    const fc = j?.result?.permission?.FunctionCall;
+    if (!fc) return null;
+    return fc.allowance == null ? -1n : BigInt(fc.allowance);
+  }
+
+  /** NEAR balance (yoctoNEAR) of any account. */
+  async nearBalance(accountId: string): Promise<bigint> {
+    const res = await fetch(this.rpcUrl, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "query", params: { request_type: "view_account", finality: "optimistic", account_id: accountId } }),
+    });
+    const j: any = await res.json();
+    return BigInt(j?.result?.amount ?? 0);
+  }
+
   /** Client signed by a vault-issued agent key. */
   agent(agentKey: KeyPairString) {
     const acct = new Account(this.vaultId, this.rpcUrl, agentKey);
@@ -229,11 +255,11 @@ export class AlmonerVault {
       acct.callFunction<T & object>({ contractId: this.vaultId, methodName, args, gas }) as Promise<T>;
     return {
       publicKey: KeyPair.fromString(agentKey).getPublicKey().toString(),
-      requestPurchase: (a: { task_id: number; mandate_hash: string; signed: SignedQuote; reason: string; idempotency_key: string }) =>
+      requestPurchase: (a: { task_id: number; mandate_hash: string; signed: SignedQuote; reason: string; idempotency_key: string; gas?: bigint }) =>
         call<Purchase>(
           "request_purchase",
           { task_id: a.task_id, mandate_hash: a.mandate_hash, quote: a.signed.quote, signature: a.signed.signature, reason: a.reason, idempotency_key: a.idempotency_key },
-          60n * TGAS,
+          a.gas ?? 60n * TGAS,
         ),
       confirmDelivery: (purchase_id: number, accept: boolean, note?: string) =>
         call<Purchase>("confirm_delivery", { purchase_id, accept, note: note ?? null }, 100n * TGAS),
