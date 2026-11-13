@@ -30,3 +30,10 @@ pub struct TestUsdc {
     token: FungibleToken,
 }
 
+#[near]
+impl TestUsdc {
+    #[init]
+    pub fn new() -> Self {
+        Self { token: FungibleToken::new(StorageKey::Token) }
+    }
+}
