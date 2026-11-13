@@ -209,3 +209,18 @@ web/                   Read-only dashboard (static, no build step)
 scripts/build.sh       Contract → wasm
 ```
 
+## Built at NEAR HACKATHON
+
+- **All code in this repository was written during NEAR HACKATHON (Nov 2026), from scratch, for NEAR only.** Everything runs on NEAR: contracts on NEAR testnet, payments in a NEP-141 token, keys issued by the contract, signatures checked by NEAR host functions. It contains no code for, and no dependency on, any other chain.
+- **Disclosure, per HACKATHON.md:** this idea first appeared as an earlier, non-NEAR prototype under a different name (Vibestarter Vibeathon 02). None of that code is used here.
+
+### Third-party code and AI (HACKATHON.md Q-005)
+
+| Used | Where | Purpose |
+| --- | --- | --- |
+| [near-sdk](https://crates.io/crates/near-sdk) 5.30, [near-contract-standards](https://crates.io/crates/near-contract-standards) 5.30 | contracts | NEAR contract SDK; NEP-141 implementation for the test token |
+| [ed25519-dalek](https://crates.io/crates/ed25519-dalek), [rand](https://crates.io/crates/rand) | contract tests only | Sign quotes in unit tests |
+| [near-api-js](https://www.npmjs.com/package/near-api-js) 7.5 | ts/ | RPC, transactions, key pairs |
+| [tsx](https://www.npmjs.com/package/tsx), [typescript](https://www.npmjs.com/package/typescript), [@noble/curves](https://www.npmjs.com/package/@noble/curves) (tests) | ts/ | Run and typecheck scripts; deterministic test key |
+| Claude (Anthropic) | whole repo | Track research, design, and writing code, tests and docs with the builder. Every test in the repo runs. |
+
