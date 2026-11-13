@@ -36,4 +36,13 @@ impl TestUsdc {
     pub fn new() -> Self {
         Self { token: FungibleToken::new(StorageKey::Token) }
     }
+
+    /// Mint up to 1,000 tUSDC to `account_id` (or the caller). Testnet only.
+    pub fn faucet(&mut self, account_id: Option<AccountId>, amount: U128) {
+        let to = account_id.unwrap_or_else(env::predecessor_account_id);
+        require!(amount.0 > 0 && amount.0 <= FAUCET_MAX, "faucet: 1..=1000 tUSDC per call");
+        self.ensure_registered(&to);
+        self.token.internal_deposit(&to, amount.0);
+        FtMint { owner_id: &to, amount, memo: Some("faucet") }.emit();
+    }
 }
