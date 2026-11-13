@@ -124,3 +124,13 @@ export interface VaultView {
   log_head: string;
 }
 
+export interface LogEntry {
+  seq: number;
+  at_ms: number;
+  kind: string;
+  purchase_id: number | null;
+  code: string;
+  prev_hash: string;
+  hash: string;
+}
+
