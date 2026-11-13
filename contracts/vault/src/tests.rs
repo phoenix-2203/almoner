@@ -447,3 +447,12 @@ fn outside_account_cannot_call_agent_methods() {
     w.v.request_purchase(1, w.hash.clone(), q, sig, "x".into(), "k".into());
 }
 
+#[test]
+#[should_panic(expected = "agent key revoked")]
+fn revoked_agent_is_locked_out() {
+    let mut w = setup();
+    as_owner(T0);
+    let _ = w.v.revoke_agent(w.agent.clone());
+    buy(&mut w, "honest", "https://datadesk/r", "report", USDC / 10, "n1", "k1");
+}
+
