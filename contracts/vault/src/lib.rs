@@ -382,4 +382,44 @@ impl Vault {
             .ft_transfer(self.owner.clone(), amount, Some("almoner vault withdraw".into()))
             .then(Self::ext(env::current_account_id()).with_static_gas(GAS_CALLBACK).on_withdraw(amount))
     }
+
+    // ------------------------------------------------------------------
+    // Sellers
+    // ------------------------------------------------------------------
+
+    /// Register (or update) as a seller. The caller's account is the payee;
+    /// `quote_key` is the ed25519 key that signs quotes.
+    #[payable]
+    pub fn register_seller(&mut self, name: String, quote_key: PublicKey, about: Option<String>) {
+        require!(quote_key.curve_type() == CurveType::ED25519, "quote_key must be ed25519");
+        let account_id = env::predecessor_account_id();
+        let key: [u8; 32] = quote_key.as_bytes()[1..].try_into().unwrap_or_else(|_| env::abort());
+        let now = env::block_timestamp_ms();
+        if let Some(s) = self.sellers.get_mut(&account_id) {
+            s.name = truncate(&name, MAX_SHORT);
+            s.quote_key = key;
+            if let Some(a) = about {
+                s.about = truncate(&a, MAX_TEXT);
+            }
+        } else {
+            require!(
+                env::attached_deposit() >= SELLER_REGISTRATION_DEPOSIT,
+                "attach 0.01 NEAR to register (covers storage)"
+            );
+            self.sellers.insert(
+                account_id.clone(),
+                Seller {
+                    account_id,
+                    name: truncate(&name, MAX_SHORT),
+                    about: truncate(&about.unwrap_or_default(), MAX_TEXT),
+                    quote_key: key,
+                    on_hold: false,
+                    hold_reason: String::new(),
+                    registered_ms: now,
+                    stats: SellerStats::default(),
+                },
+            );
+        }
+        self.append_log("seller_registered", None, "OK");
+    }
 }
