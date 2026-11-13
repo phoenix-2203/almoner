@@ -221,3 +221,18 @@ pub struct SellerView {
     pub settled: u32,
 }
 
+#[near(serializers = [json])]
+pub struct VaultView {
+    pub owner: AccountId,
+    pub token: AccountId,
+    pub frozen: bool,
+    pub balance: U128,
+    pub reserved: U128,
+    pub available: U128,
+    pub tasks: u32,
+    pub agents: u32,
+    pub sellers: u32,
+    pub purchases: u32,
+    pub log_len: u32,
+    pub log_head: String,
+}
