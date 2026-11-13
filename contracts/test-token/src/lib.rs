@@ -120,3 +120,9 @@ impl FungibleTokenMetadataProvider for TestUsdc {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use near_sdk::test_utils::{accounts, VMContextBuilder};
+    use near_sdk::{testing_env, NearToken};
+}
