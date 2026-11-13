@@ -49,12 +49,27 @@
       card("Decisions", String(v.purchases)),
     ].join("");
 
+    // Hero: the newest decisions and four headline numbers, all read from chain.
+    $("heroVault").textContent = cfg.vault;
+    const words = { Paid: "Paid after delivery check", Reused: "Reused for $0", Escrowed: "Held in escrow", Delivered: "Delivered, awaiting review", PayoutPending: "Paying seller", PendingApproval: "Waiting for a person", Refunded: "Refunded", Rejected: "Rejected by owner", Declined: "Refused" };
+    $("feed").innerHTML = purchases.slice(0, 6).map((p) => `<li><span class="chip ${tone[p.status] || ""}">${esc(p.status === "Declined" ? p.code : p.status)}</span>
+      <span class="what"><b>${esc(p.item.replace(/^https?:\/\//, ""))}</b><span>${esc(words[p.status] || p.status)} · ${esc(p.detail)}</span></span>
+      <span class="amt">${usdc(p.price)}</span></li>`).join("") || `<li class="muted">No decisions yet.</li>`;
+    const refused = purchases.filter((p) => p.status === "Declined").length;
+    const refunded = purchases.filter((p) => p.status === "Refunded").length;
+    const stat = (v, k) => `<div class="stat"><div class="v">${v}</div><div class="k">${esc(k)}</div></div>`;
+    $("stats").innerHTML = [
+      stat(v.purchases, "decisions recorded on-chain"),
+      stat(refused, "purchases refused before money moved"),
+      stat(refunded, "junk deliveries refunded"),
+      stat(usdc(v.balance).replace(" tUSDC", ""), "tUSDC still in the vault"),
+    ].join("");
+
     if (cfg.challenge) {
       const tries = purchases.filter((p) => p.task_id === cfg.challenge.task);
       const moved = tries.filter((p) => !["Declined", "Rejected"].includes(p.status)).length;
-      $("challenge").innerHTML = `<div class="challenge"><strong>Public challenge:</strong> this vault's agent key is published.
-        <a href="${esc(cfg.challenge.url)}" target="_blank" rel="noopener">Take the key and try to move the money.</a>
-        <span class="chip ${moved ? "bad" : "ok"}">${tries.length} recorded attempt${tries.length === 1 ? "" : "s"} · ${moved} got through</span></div>`;
+      $("challenge").innerHTML = `<div class="challenge"><a class="btn" href="${esc(cfg.challenge.url)}" target="_blank" rel="noopener">Get the key (CHALLENGE.md)</a><br>
+        <span class="chip ${moved ? "bad" : "ok"}">${tries.length} recorded attempt${tries.length === 1 ? "" : "s"} so far · ${moved} got through</span></div>`;
     }
 
     $("tasks").innerHTML = (await Promise.all(tasks.map(async (t) => {
