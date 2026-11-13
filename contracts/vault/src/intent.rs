@@ -72,3 +72,8 @@ pub fn find_blocked(rules: &TaskInput, q: &Quote) -> Option<String> {
     })
 }
 
+pub fn category_allowed(rules: &TaskInput, category: &str) -> bool {
+    rules.categories.is_empty()
+        || rules.categories.iter().any(|c| c.eq_ignore_ascii_case(category.trim()))
+}
+
