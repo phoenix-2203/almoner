@@ -221,4 +221,23 @@ export class AlmonerVault {
   getLog = (from_index = 0, limit = 200) => this.view<LogEntry[]>("get_log", { from_index, limit });
   verifyLog = () => this.view<boolean>("verify_log");
   getMandateJson = (task_id: number) => this.view<string | null>("get_mandate_json", { task_id });
+
+  /** Client signed by a vault-issued agent key. */
+  agent(agentKey: KeyPairString) {
+    const acct = new Account(this.vaultId, this.rpcUrl, agentKey);
+    const call = <T>(methodName: string, args: object, gas: bigint) =>
+      acct.callFunction<T & object>({ contractId: this.vaultId, methodName, args, gas }) as Promise<T>;
+    return {
+      publicKey: KeyPair.fromString(agentKey).getPublicKey().toString(),
+      requestPurchase: (a: { task_id: number; mandate_hash: string; signed: SignedQuote; reason: string; idempotency_key: string }) =>
+        call<Purchase>(
+          "request_purchase",
+          { task_id: a.task_id, mandate_hash: a.mandate_hash, quote: a.signed.quote, signature: a.signed.signature, reason: a.reason, idempotency_key: a.idempotency_key },
+          60n * TGAS,
+        ),
+      confirmDelivery: (purchase_id: number, accept: boolean, note?: string) =>
+        call<Purchase>("confirm_delivery", { purchase_id, accept, note: note ?? null }, 100n * TGAS),
+      settleExpired: (purchase_id: number) => call<Purchase>("settle_expired", { purchase_id }, 100n * TGAS),
+    };
+  }
 }
