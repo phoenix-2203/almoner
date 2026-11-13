@@ -195,3 +195,13 @@ pub struct TaskView {
     pub updated_ms: u64,
 }
 
+#[near(serializers = [json])]
+pub struct AgentView {
+    pub name: String,
+    pub public_key: String,
+    pub task_ids: Vec<TaskId>,
+    pub active: bool,
+    pub added_ms: u64,
+    pub requests: u32,
+}
+
