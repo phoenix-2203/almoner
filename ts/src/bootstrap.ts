@@ -150,8 +150,8 @@ async function main() {
   // 6. Vault issues the agent's function-call key
   const agents = await vault.getAgents();
   if (!agents.some((a) => a.public_key === state.agent.publicKey && a.active)) {
-    await ownerApi.addAgent(state.agent.publicKey, state.agent.name, [state.taskId], NEAR(1).toString());
-    console.log(`  + agent key issued: ${state.agent.publicKey.slice(0, 20)}… (function-call only, 1 NEAR gas allowance)`);
+    await ownerApi.addAgent(state.agent.publicKey, state.agent.name, [state.taskId], NEAR(3).toString());
+    console.log(`  + agent key issued: ${state.agent.publicKey.slice(0, 20)}… (function-call only, 3 NEAR gas allowance)`);
   }
 
   writeFileSync(

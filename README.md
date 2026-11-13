@@ -145,7 +145,7 @@ You should see:
   + funded vault with 20 tUSDC
   + seller datadesk… registered, + seller junkdata… registered
   + task #1 signed, mandate 9fc7abafc4270ffb…
-  + agent key issued: ed25519:… (function-call only, 1 NEAR gas allowance)
+  + agent key issued: ed25519:… (function-call only, 3 NEAR gas allowance)
 ```
 
 Keys for the accounts it creates are saved to `ts/.almoner/state.json` (gitignored, mode 600). Re-running `bootstrap` skips steps that are already done.
