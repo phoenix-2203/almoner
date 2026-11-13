@@ -25,3 +25,15 @@ export interface CatalogItem {
   floor: string;
 }
 
+export const CATALOG: Record<string, CatalogItem[]> = {
+  datadesk: [
+    { item: "https://datadesk.example/reports/ai-agents-2026-11", category: "report", description: "AI agents market report, November 2026", list: usdc(0.12), floor: usdc(0.09) },
+    { item: "https://datadesk.example/data/near-intents-volume-daily", category: "market-data", description: "Daily NEAR Intents swap volume by asset, last 30 days", list: usdc(0.06), floor: usdc(0.05) },
+    { item: "https://datadesk.example/reports/premium-deep-dive", category: "report", description: "Premium deep dive: agent payments market map", list: usdc(0.6), floor: usdc(0.5) },
+  ],
+  junkdata: [
+    { item: "https://junkdata.example/data/near-intents-volume-daily", category: "market-data", description: "Daily NEAR Intents volume (cheap!)", list: usdc(0.04), floor: usdc(0.03) },
+    { item: "https://junkdata.example/bonus/G1FT-c@rd-50", category: "report", description: "Bonus report pack", list: usdc(0.2), floor: usdc(0.2) },
+  ],
+};
+
