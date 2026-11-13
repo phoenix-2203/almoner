@@ -13,3 +13,5 @@ import { AlmonerVault, TGAS, usdc, type TaskInput } from "./sdk.js";
 import { NETWORK, ROOT, RPC, STATE_FILE, ownerCreds, saveState, type State } from "./config.js";
 import { CATALOG } from "./sellers.js";
 
+const NEAR = (n: number) => BigInt(Math.round(n * 1000)) * 10n ** 21n;
+
