@@ -14,8 +14,15 @@
 <meta name="twitter:title" content="Almoner: agents can ask, never take">
 <meta name="twitter:description" content="A NEAR vault for AI agents. We published the agent's private key. Try to take the money.">
 <meta name="twitter:image" content="https://phoenix-2203.github.io/almoner/og.png">
-<meta name="theme-color" content="#1c6b45">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231c6b45'/%3E%3Cpath d='M16 6l10 10-10 10L6 16z' fill='%23f7f6f1'/%3E%3C/svg%3E">
+<meta name="theme-color" content="#090c0b">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23090c0b'/%3E%3Cpath d='M16 6l10 10-10 10L6 16z' fill='%2319f5a5'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script>
+  // Theme: saved choice first, then the system setting. Runs before paint to avoid a flash.
+  (function () { var t = null; try { t = localStorage.getItem("almoner-theme"); } catch (e) {} if (!t) t = matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark"; document.documentElement.dataset.theme = t; })();
+</script>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -26,33 +33,37 @@
     <a href="#how">How it works</a>
     <a href="#compare">Compare</a>
     <a href="#break">Break it</a>
-    <a href="#live">Live vault</a>
     <a href="#faq">FAQ</a>
     <a href="https://github.com/phoenix-2203/almoner" target="_blank" rel="noopener">GitHub</a>
   </nav>
-  <a class="btn primary small" href="#break">Take the key</a>
+  <button type="button" id="theme" class="themebtn" aria-label="Switch between light and dark" title="Light / dark"><span class="sun">☀</span><span class="moon">☾</span></button>
+  <a class="btn primary small" href="try.html">Try it <span aria-hidden="true">→</span></a>
 </header>
+<div class="backdrop" aria-hidden="true"></div>
 
 <main id="top">
   <section class="hero">
     <div class="pitch">
       <span class="eyebrow"><i class="dot"></i> Live on NEAR testnet · built at NEAR HACKATHON</span>
-      <h1>Agents can ask.<br>They can never take.</h1>
+      <h1>Agents can ask.<br>They can never<br><mark>take</mark>.</h1>
       <p class="sub">Almoner is a vault for AI agents on NEAR. The agent holds a key that can only <em>ask</em> to buy. Rules a person signed decide. Money waits in escrow until delivery is checked, and junk gets refunded.</p>
       <div class="actions">
-        <a class="btn primary" href="#break">Here's the agent's key. Try to take the money</a>
-        <a class="btn" href="#live">Watch the live vault</a>
+        <a class="btn primary" href="try.html">Try it: attack the live vault <span aria-hidden="true">→</span></a>
+        <a class="btn" href="#how">How it works</a>
       </div>
+      <p class="fine">No account, no install. The agent's real private key is already loaded.</p>
     </div>
     <aside class="ledger" aria-label="Latest decisions from the live vault">
-      <div class="ledger-head"><span><i class="dot"></i> Latest decisions, read from chain</span><span class="mono muted" id="heroVault"></span></div>
+      <div class="ledger-head"><span class="nowrap"><i class="dot"></i> Live from chain</span><span class="mono muted" id="heroVault"></span></div>
       <ol id="feed"><li class="muted">Reading the vault…</li></ol>
+      <div class="toast mono"><span class="p">$</span> npm run attack <span class="arrowr">→</span> <b>Nothing moved.</b></div>
     </aside>
   </section>
 
   <section class="stats" id="stats" aria-label="Live numbers from the vault"></section>
 
   <section id="how">
+    <p class="kicker">Four steps</p>
     <h2>How it works</h2>
     <div class="steps">
       <div class="step"><b>1</b><h3>A person signs the rules</h3><p>Purpose, allowed categories, blocked terms, sellers, budget, per-purchase cap and an approval line. One task, one mandate.</p></div>
@@ -74,6 +85,7 @@
   </section>
 
   <section id="compare">
+    <p class="kicker">Why another agent wallet</p>
     <h2>A spending limit isn't enough</h2>
     <div class="tablewrap"><table class="compare">
       <thead><tr><th>What goes wrong</th><th>Agent wallet with a spending cap</th><th>Almoner</th></tr></thead>
@@ -90,8 +102,10 @@
 
   <section id="break" class="break">
     <div>
+      <p class="kicker">Public challenge</p>
       <h2>Break it</h2>
       <p>The private key of this vault's agent is published in the repository on purpose. One command signs six theft attempts with it and shows how each is stopped: four by the NEAR protocol, two by the vault, which records them on-chain.</p>
+      <div class="actions"><a class="btn primary" href="try.html">Run the attacks in your browser <span aria-hidden="true">→</span></a></div>
       <div id="challenge"></div>
     </div>
     <div class="termwrap">
@@ -118,32 +132,14 @@ Vault token balance: 19.85 tUSDC before, 19.85 tUSDC after.
     </div>
   </section>
 
-  <section id="live">
-    <div class="live-head">
-      <h2>Live vault</h2>
-      <form id="pick"><input id="vaultInput" placeholder="vault.yourname.testnet" spellcheck="false" aria-label="Vault account"><button>Load</button></form>
-    </div>
-    <div id="vault" class="cards"></div>
+  <section class="cta">
+    <h2>See it refuse you.</h2>
+    <p>Open the product, press a button, and watch a real transaction signed with the agent's key bounce off the vault. Every attempt shows up in the public record a few seconds later.</p>
+    <div class="actions"><a class="btn primary" href="try.html">Try it now <span aria-hidden="true">→</span></a><a class="btn" href="https://github.com/phoenix-2203/almoner" target="_blank" rel="noopener">Read the code</a></div>
   </section>
-  <section>
-    <h2>Task mandates</h2>
-    <div id="tasks"></div>
-  </section>
-  <section>
-    <h2>Every decision <span class="muted" id="pcount"></span></h2>
-    <div class="filters" id="filters"></div>
-    <div class="tablewrap"><table id="purchases"><thead><tr><th>#</th><th>When</th><th>Decision</th><th>Seller</th><th>Item</th><th class="num">Price</th><th>Why</th></tr></thead><tbody></tbody></table></div>
-  </section>
-  <section>
-    <h2>Seller reputation <span class="muted">earned only from escrow-settled purchases</span></h2>
-    <div id="sellers" class="cards"></div>
-  </section>
-  <section>
-    <h2>Tamper-evident log</h2>
-    <div id="logcheck"></div>
-    <div class="tablewrap"><table id="log"><thead><tr><th>Seq</th><th>When</th><th>Event</th><th>Code</th><th>Hash</th></tr></thead><tbody></tbody></table></div>
-  </section>
+
   <section id="faq">
+    <p class="kicker">Straight answers</p>
     <h2>Questions a careful reader asks</h2>
     <details><summary>Isn't this just a spending limit?</summary><p>No. A limit answers "can the agent afford this?". Almoner also answers "is this what it was asked to buy, at the price the seller signed, and did the work arrive?". Purchases inside the budget are still refused when they don't serve the task.</p></details>
     <details><summary>What can the published key actually do?</summary><p>Three things: ask the vault to buy, accept or reject a delivery for its own task, and settle a purchase whose time window has passed. It can also burn its own gas allowance of 1 NEAR, after which it stops working. It can't transfer funds, add keys or call any other contract. NEAR enforces that, not our code.</p></details>
@@ -156,6 +152,11 @@ Vault token balance: 19.85 tUSDC before, 19.85 tUSDC after.
 <script src="config.js"></script>
 <script src="app.js"></script>
 <script>
+  document.getElementById("theme").onclick = () => {
+    const next = document.documentElement.dataset.theme === "light" ? "dark" : "light";
+    document.documentElement.dataset.theme = next;
+    try { localStorage.setItem("almoner-theme", next); } catch (e) {}
+  };
   document.getElementById("copy").onclick = async (e) => {
     try { await navigator.clipboard.writeText(document.getElementById("cmd").textContent); e.target.textContent = "Copied"; setTimeout(() => (e.target.textContent = "Copy"), 1500); } catch {}
   };
