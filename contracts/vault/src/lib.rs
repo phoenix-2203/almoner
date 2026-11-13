@@ -710,4 +710,8 @@ impl Vault {
     pub fn get_seller(&self, account_id: AccountId) -> Option<SellerView> {
         self.sellers.get(&account_id).map(Self::seller_view)
     }
+
+    pub fn get_purchase(&self, purchase_id: PurchaseId) -> Option<Purchase> {
+        self.purchases.get(purchase_id).cloned()
+    }
 }
