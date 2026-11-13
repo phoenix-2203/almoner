@@ -474,3 +474,11 @@ fn only_the_seller_can_mark_delivery() {
     w.v.deliver(p.id, "h".into());
 }
 
+#[test]
+#[should_panic(expected = "only the vault's token can be deposited")]
+fn foreign_token_deposit_is_refused() {
+    let mut w = setup();
+    as_account(&acc("fake-usdc.testnet"), T0, NearToken::from_yoctonear(0));
+    let _ = w.v.ft_on_transfer(owner(), U128(1_000 * USDC), String::new());
+}
+
