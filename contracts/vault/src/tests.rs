@@ -325,3 +325,25 @@ fn limits_and_budget() {
     assert_eq!(p.code, "OVER_BUDGET");
 }
 
+#[test]
+fn junk_delivery_rejected_refunds_and_holds_seller() {
+    let mut w = setup();
+    let p = buy(&mut w, "junk", "https://junkdata/report", "report", USDC / 10, "n1", "k1");
+    as_account(&w.junk.account, T0 + 2_000, NearToken::from_yoctonear(0));
+    w.v.deliver(p.id, "sha256:empty".into());
+    as_agent(&w.agent, T0 + 3_000);
+    let r = w.v.confirm_delivery(p.id, false, Some("empty body".into()));
+    match r {
+        PromiseOrValue::Value(p) => assert_eq!(p.status, PurchaseStatus::Refunded),
+        _ => panic!("expected refund"),
+    }
+    assert_eq!(w.v.get_vault().reserved.0, 0);
+    assert_eq!(w.v.get_vault().balance.0, 10 * USDC);
+    let s = w.v.get_seller(w.junk.account.clone()).unwrap();
+    assert!(s.on_hold);
+    assert_eq!(s.stats.rejected, 1);
+    assert_eq!(s.delivery_score_bps, 0);
+    let again = buy(&mut w, "junk", "https://junkdata/other", "report", USDC / 10, "n2", "k2");
+    assert_eq!(again.code, "SELLER_ON_HOLD");
+}
+
