@@ -1,0 +1,38 @@
+name: ci
+on: [push, pull_request, workflow_dispatch]
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: Unit tests (31 vault scenarios + token)
+        run: cargo test --workspace
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings -A clippy::explicit-counter-loop
+      - name: Install cargo-near
+        run: curl --proto '=https' --tlsv1.2 -LsSf https://github.com/near/cargo-near/releases/latest/download/cargo-near-installer.sh | sh
+      - name: Build wasm
+        run: ./scripts/build.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wasm
+          path: wasm/*.wasm
+  ts:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ts
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm run typecheck
+      - name: Cross-language tests (TS-signed quote fixture is verified by the Rust tests)
+        run: npm test
