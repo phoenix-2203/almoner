@@ -96,3 +96,16 @@ export interface Purchase {
   reused_from: number | null;
 }
 
+export interface SellerView {
+  account_id: string;
+  name: string;
+  about: string;
+  quote_key: string;
+  on_hold: boolean;
+  hold_reason: string;
+  registered_ms: number;
+  stats: { delivered_ok: number; auto_released: number; rejected: number; missed: number; earned: string };
+  delivery_score_bps: number;
+  settled: number;
+}
+
