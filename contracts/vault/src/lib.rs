@@ -654,4 +654,25 @@ impl Vault {
         }
         ok
     }
+
+    // ------------------------------------------------------------------
+    // Views
+    // ------------------------------------------------------------------
+
+    pub fn get_vault(&self) -> VaultView {
+        VaultView {
+            owner: self.owner.clone(),
+            token: self.token.clone(),
+            frozen: self.frozen,
+            balance: U128(self.balance),
+            reserved: U128(self.reserved),
+            available: U128(self.available()),
+            tasks: self.tasks.len(),
+            agents: self.agents.len(),
+            sellers: self.sellers.len(),
+            purchases: self.purchases.len(),
+            log_len: self.log.len(),
+            log_head: self.log_head.clone(),
+        }
+    }
 }
