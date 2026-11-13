@@ -101,3 +101,17 @@ pub struct SellerStats {
     pub earned: U128,
 }
 
+/// A price a seller signed. The agent forwards it; the contract checks the
+/// signature, so the agent cannot change the price, the item or the payee.
+#[near(serializers = [borsh, json])]
+#[derive(Clone, Debug)]
+pub struct Quote {
+    pub seller: AccountId,
+    pub item: String,
+    pub category: String,
+    pub description: String,
+    pub price: U128,
+    pub expires_at_ms: u64,
+    pub nonce: String,
+}
+
