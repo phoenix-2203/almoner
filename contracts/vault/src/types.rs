@@ -166,3 +166,16 @@ pub struct Purchase {
     pub reused_from: Option<PurchaseId>,
 }
 
+#[near(serializers = [borsh, json])]
+#[derive(Clone, Debug)]
+pub struct LogEntry {
+    pub seq: u32,
+    pub at_ms: u64,
+    pub kind: String,
+    pub purchase_id: Option<PurchaseId>,
+    pub code: String,
+    pub prev_hash: String,
+    /// sha256(hex) of "seq|at_ms|kind|purchase_id|code|prev_hash".
+    pub hash: String,
+}
+
