@@ -4,7 +4,9 @@
   const cfg = Object.assign({ rpc: "https://rpc.testnet.fastnear.com", network: "testnet", vault: "" }, window.ALMONER || {});
   if (qs.get("vault")) cfg.vault = qs.get("vault");
   if (qs.get("rpc")) cfg.rpc = qs.get("rpc");
-  const $ = (id) => document.getElementById(id);
+  // Pages share this script; a section that is absent gets a detached stand-in.
+  const $ = (id) => document.getElementById(id) || document.createElement("div");
+  const body = (id) => $(id).querySelector("tbody") || document.createElement("tbody");
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const usdc = (b) => { const n = Number(BigInt(b || 0)) / 1e6; return n.toFixed(n < 1 ? 3 : 2) + " tUSDC"; };
   const when = (ms) => (ms ? new Date(ms).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "");
@@ -96,7 +98,7 @@
     $("filters").querySelectorAll("button").forEach((b) => (b.onclick = () => { filter = b.dataset.s; render(); }));
     const shown = purchases.filter((p) => filter === "All" || p.status === filter);
     $("pcount").textContent = `${purchases.length} newest first`;
-    $("purchases").querySelector("tbody").innerHTML = shown.map((p) => `<tr>
+    body("purchases").innerHTML = shown.map((p) => `<tr>
       <td>${p.id}</td><td>${when(p.created_ms)}</td>
       <td><span class="chip ${tone[p.status] || ""}">${esc(p.status)}</span><div class="mono muted">${esc(p.code)}</div></td>
       <td class="mono">${esc(p.seller)}</td><td class="item mono">${esc(p.item)}<div class="muted">${esc(p.category)}</div></td>
@@ -124,7 +126,7 @@
     const complete = log.length === v.log_len;
     $("logcheck").innerHTML = `<p><span class="chip ${ok ? "ok" : "bad"}">${ok ? "✓" : "✗"} chain recomputed in your browser${complete ? "" : ` (first ${log.length} of ${v.log_len})`}</span>
       <span class="chip ${chainOk ? "ok" : "bad"}">${chainOk ? "✓" : "✗"} contract verify_log()</span> <span class="mono muted">head ${esc(v.log_head.slice(0, 20))}…</span></p>`;
-    $("log").querySelector("tbody").innerHTML = log.slice().reverse().slice(0, 60).map((e) => `<tr><td>${e.seq}</td><td>${when(e.at_ms)}</td>
+    body("log").innerHTML = log.slice().reverse().slice(0, 60).map((e) => `<tr><td>${e.seq}</td><td>${when(e.at_ms)}</td>
       <td>${esc(e.kind)}${e.purchase_id != null ? ` #${e.purchase_id}` : ""}</td><td class="mono">${esc(e.code)}</td><td class="mono muted">${esc(e.hash.slice(0, 16))}…</td></tr>`).join("");
     $("updated").textContent = `Updated ${new Date().toLocaleTimeString()}.`;
   }
@@ -139,6 +141,8 @@
     $("vault").innerHTML = card("Couldn't read the vault", esc(e.message || e), "bad");
     if ($("feed").children.length <= 1) $("feed").innerHTML = `<li class="muted">Couldn't reach NEAR just now. Retrying every 15 seconds.</li>`;
   };
+  // Shared with try.js
+  window.Almoner = { cfg, view, usdc, esc, refresh: () => render().catch(showError) };
   render().catch(showError);
   setInterval(() => render().catch(showError), 15000);
 })();
