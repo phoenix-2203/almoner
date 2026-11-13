@@ -9,6 +9,8 @@
     "sellers": "tsx --env-file-if-exists=.env src/sellers.ts",
     "demo": "tsx --env-file-if-exists=.env src/demo.ts",
     "owner": "tsx --env-file-if-exists=.env src/owner.ts",
+    "challenge:setup": "tsx --env-file-if-exists=.env src/challenge-setup.ts",
+    "attack": "tsx src/attack.ts",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test test/*.test.ts"
   },
