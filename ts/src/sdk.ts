@@ -134,3 +134,7 @@ export interface LogEntry {
   hash: string;
 }
 
+// ---------- helpers ----------
+
+export const sha256hex = (data: string | Uint8Array) => createHash("sha256").update(data).digest("hex");
+
