@@ -72,3 +72,17 @@ pub struct Agent {
     pub requests: u32,
 }
 
+#[near(serializers = [borsh])]
+#[derive(Clone, Debug)]
+pub struct Seller {
+    pub account_id: AccountId,
+    pub name: String,
+    pub about: String,
+    /// ed25519 key the seller signs quotes with (32 bytes).
+    pub quote_key: [u8; 32],
+    pub on_hold: bool,
+    pub hold_reason: String,
+    pub registered_ms: u64,
+    pub stats: SellerStats,
+}
+
