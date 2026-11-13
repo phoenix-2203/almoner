@@ -76,4 +76,9 @@ impl FungibleTokenCore for TestUsdc {
     fn ft_total_supply(&self) -> U128 {
         self.token.ft_total_supply()
     }
+
+    fn ft_balance_of(&self, account_id: AccountId) -> U128 {
+        self.token.ft_balance_of(account_id)
+    }
 }
+
