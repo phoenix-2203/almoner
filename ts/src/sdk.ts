@@ -144,3 +144,18 @@ export const fmtUsdc = (base: string | bigint) => {
   return `${n.toFixed(n < 1 ? 3 : 2)} tUSDC`;
 };
 
+/** Exact bytes a seller signs. Must match contracts/vault/src/intent.rs::quote_message. */
+export function quoteMessage(vault: string, q: Quote): string {
+  return [
+    "almoner-quote/v1",
+    vault,
+    q.seller,
+    q.item,
+    q.category,
+    BigInt(q.price).toString(),
+    String(q.expires_at_ms),
+    q.nonce,
+    sha256hex(q.description),
+  ].join("\n");
+}
+
