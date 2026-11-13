@@ -1,0 +1,16 @@
+[package]
+name = "almoner-test-usdc"
+version = "0.1.0"
+edition = "2021"
+description = "Testnet-only NEP-141 token (tUSDC, 6 decimals) with an open faucet, for the Almoner demo"
+license = "MIT"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+near-sdk = "5"
+near-contract-standards = "5"
+
+[dev-dependencies]
+near-sdk = { version = "5", features = ["unit-testing"] }
