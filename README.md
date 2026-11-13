@@ -177,3 +177,20 @@ npm run owner -- lock-vault --yes   # optional: delete the vault's full-access k
 
 ---
 
+## Trust model and limits
+
+**Guaranteed by the contract:**
+- An agent key can only ask the vault to buy; it can never move funds directly.
+- Every payment matches a seller-signed quote, within the mandate in force at that moment.
+- Escrowed funds can't be withdrawn by the owner.
+- Refunds and auto-release follow fixed windows.
+- Every decision is recorded.
+
+**Not guaranteed:**
+- **IntentLock is deterministic, not semantic.** It enforces allowed categories and blocked terms, decoding common disguises: percent-encoding, case, leetspeak, spacing. A seller can still mislabel an item's category. That seller then risks rejection, refund and a hold.
+- **Delivery quality is judged by the buyer.** The seller commits to a result hash on-chain. The SDK accepts only content that matches the hash and isn't empty or an error. A malicious buyer could reject good work. That costs the buyer nothing but is visible on the record, and the owner can review. Third-party evaluation is on the roadmap.
+- **Reputation is per vault for now.** It can't be inflated without paying through escrow.
+- **The owner is trusted to set rules.** Approval of a held purchase can't override any limit.
+- **Before `lock-vault`, whoever holds the vault's full-access key can upgrade the contract.**
+- **Testnet only, not audited.** The tUSDC token has an open faucet by design.
+
