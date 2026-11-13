@@ -9,3 +9,11 @@
 import { AlmonerVault, preflight, sha256hex, type Purchase, type SellerView, type SignedQuote, type TaskView } from "./sdk.js";
 import { SELLERS_URL } from "./config.js";
 
+export interface Offer {
+  sellerName: string;
+  signed: SignedQuote;
+  note: string;
+  reputationBps: number;
+  settled: number;
+}
+
