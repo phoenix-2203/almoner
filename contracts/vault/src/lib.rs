@@ -555,4 +555,13 @@ impl Vault {
         self.emit_purchase(&p);
         p
     }
+
+    /// Buyer's review of a delivered purchase: accept pays the seller, reject refunds.
+    pub fn confirm_delivery(&mut self, purchase_id: PurchaseId, accept: bool, note: Option<String>) -> PromiseOrValue<Purchase> {
+        let agent_pk = self.assert_agent();
+        let p = self.purchase_or_panic(purchase_id);
+        let agent = self.agents.get(&agent_pk).unwrap_or_else(|| env::abort());
+        require!(agent.task_ids.contains(&p.task_id), "agent is not assigned to this purchase's task");
+        self.internal_review(purchase_id, accept, note, "agent")
+    }
 }
