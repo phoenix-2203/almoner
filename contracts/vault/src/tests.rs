@@ -465,3 +465,12 @@ fn unregistered_key_on_vault_is_refused() {
     w.v.request_purchase(1, w.hash.clone(), q, sig, "x".into(), "k".into());
 }
 
+#[test]
+#[should_panic(expected = "only the seller can deliver")]
+fn only_the_seller_can_mark_delivery() {
+    let mut w = setup();
+    let p = buy(&mut w, "honest", "https://datadesk/r", "report", USDC / 10, "n1", "k1");
+    as_account(&w.junk.account, T0 + 2_000, NearToken::from_yoctonear(0));
+    w.v.deliver(p.id, "h".into());
+}
+
