@@ -15,3 +15,16 @@ import { CATALOG } from "./sellers.js";
 
 const NEAR = (n: number) => BigInt(Math.round(n * 1000)) * 10n ** 21n;
 
+function findWasm(name: string): string {
+  const candidates = [
+    process.env[`${name.toUpperCase()}_WASM`],
+    join(ROOT, "wasm", `${name}.wasm`),
+    join(ROOT, "target", "near", name, `${name}.wasm`),
+    join(ROOT, "target", "near", `${name}.wasm`),
+    join(ROOT, "target", "wasm32-unknown-unknown", "release", `${name}.wasm`),
+  ].filter(Boolean) as string[];
+  const hit = candidates.find((p) => existsSync(p));
+  if (!hit) throw new Error(`Can't find ${name}.wasm. Run \`./scripts/build.sh\` (or download the CI artifact into ./wasm). Looked in:\n  ${candidates.join("\n  ")}`);
+  return hit;
+}
+
