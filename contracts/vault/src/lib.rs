@@ -122,3 +122,11 @@ pub fn mandate_hash(rules: &TaskInput) -> String {
     sha256_hex(json.as_bytes())
 }
 
+/// Outcome of the checks in `request_purchase`.
+enum Decision {
+    Decline(&'static str, String),
+    Reuse(PurchaseId, String),
+    Hold(String),
+    Escrow(String),
+}
+
