@@ -168,3 +168,5 @@ export function signQuote(vault: string, q: Quote, quoteKey: KeyPairString): Sig
   return { quote: q, signature: Buffer.from(sig).toString("base64") };
 }
 
+export const newNonce = () => randomBytes(12).toString("hex");
+
