@@ -17,3 +17,11 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import { AlmonerVault, newNonce, sha256hex, signQuote, usdc, type Quote } from "./sdk.js";
 import { loadState, RPC } from "./config.js";
 
+export interface CatalogItem {
+  item: string;
+  category: string;
+  description: string;
+  list: string;
+  floor: string;
+}
+
