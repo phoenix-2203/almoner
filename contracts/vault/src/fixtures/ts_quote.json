@@ -1,0 +1,14 @@
+{
+  "vault": "vault.owner.testnet",
+  "seller_public_key": "ed25519:AKnL4NNf3DGWZJS6cPknBuEGnVsV4A4m5tgebLHaRSZ9",
+  "quote": {
+    "seller": "datadesk.testnet",
+    "item": "https://datadesk/ai-agents-report",
+    "category": "report",
+    "description": "Daily report | with odd chars\nand newlines",
+    "price": "100000",
+    "expires_at_ms": 1800000600000,
+    "nonce": "ts-fixture-1"
+  },
+  "signature": "vIqQwlcp1vYvSgNh/JtuL44K1Qb37PxbJKpbHgXRslZVn7tO5fAaKU3Lve4MB21Rx9Q7Dvg4lBCj1XqWwOTyBg=="
+}
