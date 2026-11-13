@@ -1024,4 +1024,9 @@ impl Vault {
             settled,
         }
     }
+
+    fn log_hash(seq: u32, at_ms: u64, kind: &str, purchase_id: Option<PurchaseId>, code: &str, prev: &str) -> String {
+        let pid = purchase_id.map(|p| p.to_string()).unwrap_or_else(|| "-".into());
+        sha256_hex(format!("{}|{}|{}|{}|{}|{}", seq, at_ms, kind, pid, code, prev).as_bytes())
+    }
 }
