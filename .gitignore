@@ -1,0 +1,6 @@
+target/
+node_modules/
+wasm/*.wasm
+ts/.env
+ts/.almoner/
+.DS_Store
