@@ -24,3 +24,9 @@ enum StorageKey {
     Token,
 }
 
+#[near(contract_state)]
+#[derive(PanicOnDefault)]
+pub struct TestUsdc {
+    token: FungibleToken,
+}
+
