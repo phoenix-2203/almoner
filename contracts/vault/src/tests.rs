@@ -374,3 +374,21 @@ fn silent_buyer_auto_releases_to_seller() {
     assert_eq!(w.v.get_seller(w.honest.account.clone()).unwrap().stats.auto_released, 1);
 }
 
+#[test]
+fn failed_payout_restores_funds() {
+    let mut w = setup();
+    let p = buy(&mut w, "honest", "https://datadesk/r", "report", USDC / 10, "n1", "k1");
+    as_account(&w.honest.account, T0 + 2_000, NearToken::from_yoctonear(0));
+    w.v.deliver(p.id, "h".into());
+    as_agent(&w.agent, T0 + 3_000);
+    let _ = w.v.confirm_delivery(p.id, true, None);
+    as_callback(T0 + 4_000, false);
+    let back = w.v.on_payout(p.id, "PAID_ACCEPTED".into());
+    assert_eq!(back.status, PurchaseStatus::Delivered);
+    assert_eq!(back.code, "PAYOUT_FAILED");
+    let v = w.v.get_vault();
+    assert_eq!(v.balance.0, 10 * USDC);
+    assert_eq!(v.reserved.0, USDC / 10);
+    assert_eq!(w.v.get_task(1).unwrap().spent.0, 0);
+}
+
