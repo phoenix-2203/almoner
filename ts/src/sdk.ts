@@ -209,4 +209,16 @@ export class AlmonerVault {
   view<T>(method: string, args: Record<string, unknown> = {}): Promise<T> {
     return this.provider.callFunction({ contractId: this.vaultId, method, args }) as Promise<T>;
   }
+
+  getVault = () => this.view<VaultView>("get_vault");
+  getTask = (task_id: number) => this.view<TaskView | null>("get_task", { task_id });
+  getTasks = () => this.view<TaskView[]>("get_tasks");
+  getAgents = () => this.view<{ name: string; public_key: string; task_ids: number[]; active: boolean; requests: number }[]>("get_agents");
+  getSellers = () => this.view<SellerView[]>("get_sellers");
+  getSeller = (account_id: string) => this.view<SellerView | null>("get_seller", { account_id });
+  getPurchase = (purchase_id: number) => this.view<Purchase | null>("get_purchase", { purchase_id });
+  getPurchases = (limit = 50) => this.view<Purchase[]>("get_purchases", { limit });
+  getLog = (from_index = 0, limit = 200) => this.view<LogEntry[]>("get_log", { from_index, limit });
+  verifyLog = () => this.view<boolean>("verify_log");
+  getMandateJson = (task_id: number) => this.view<string | null>("get_mandate_json", { task_id });
 }
