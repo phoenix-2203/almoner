@@ -241,7 +241,7 @@ scripts/build.sh       Contract → wasm
 | [ed25519-dalek](https://crates.io/crates/ed25519-dalek), [rand](https://crates.io/crates/rand) | contract tests only | Sign quotes in unit tests |
 | [near-api-js](https://www.npmjs.com/package/near-api-js) 7.5 | ts/ | RPC, transactions, key pairs |
 | [tsx](https://www.npmjs.com/package/tsx), [typescript](https://www.npmjs.com/package/typescript), [@noble/curves](https://www.npmjs.com/package/@noble/curves) (tests) | ts/ | Run and typecheck scripts; deterministic test key |
-| [Anton](https://github.com/googlefonts/AntonFont) and [JetBrains Mono](https://github.com/JetBrains/JetBrainsMono) fonts (SIL Open Font License) | web/fonts | Headline and monospace type, hosted with the site |
+| [Inter](https://github.com/rsms/inter) and [JetBrains Mono](https://github.com/JetBrains/JetBrainsMono) fonts (SIL Open Font License) | web/fonts | Text and monospace type, hosted with the site |
 | Claude (Anthropic) | whole repo | Track research, design, and writing code, tests and docs with the builder. Every test in the repo runs. |
 
 ## Roadmap (NEAR-native)
