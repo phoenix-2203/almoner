@@ -37,3 +37,9 @@ async function exists(id: string) {
   }
 }
 
+async function hasCode(id: string) {
+  const s: any = await new Account(id, RPC).getState();
+  const hash = s.codeHash ?? s.code_hash;
+  return hash && hash !== "11111111111111111111111111111111";
+}
+
