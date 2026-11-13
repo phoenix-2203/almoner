@@ -29,3 +29,37 @@ struct Seller {
     key: SigningKey,
 }
 
+impl Seller {
+    fn new(name: &str, seed: u8) -> Self {
+        Self { account: acc(name), key: SigningKey::from_bytes(&[seed; 32]) }
+    }
+    fn pk(&self) -> PublicKey {
+        PublicKey::from_parts(CurveType::ED25519, self.key.verifying_key().to_bytes().to_vec()).unwrap()
+    }
+    fn quote(&self, item: &str, category: &str, desc: &str, price: u128, nonce: &str) -> (Quote, Base64VecU8) {
+        self.quote_for(&vault(), item, category, desc, price, nonce, T0 + 600_000)
+    }
+    #[allow(clippy::too_many_arguments)]
+    fn quote_for(&self, v: &AccountId, item: &str, category: &str, desc: &str, price: u128, nonce: &str, expires: u64) -> (Quote, Base64VecU8) {
+        let q = Quote {
+            seller: self.account.clone(),
+            item: item.into(),
+            category: category.into(),
+            description: desc.into(),
+            price: U128(price),
+            expires_at_ms: expires,
+            nonce: nonce.into(),
+        };
+        let dh = {
+            use std::fmt::Write;
+            let d = near_sdk::env::sha256_array(desc.as_bytes());
+            let mut s = String::new();
+            for b in d { write!(s, "{:02x}", b).unwrap(); }
+            s
+        };
+        let msg = intent::quote_message(v.as_str(), &q, &dh);
+        let sig = self.key.sign(msg.as_bytes()).to_bytes().to_vec();
+        (q, Base64VecU8(sig))
+    }
+}
+
