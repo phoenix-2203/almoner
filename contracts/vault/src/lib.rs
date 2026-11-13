@@ -443,4 +443,116 @@ impl Vault {
         self.emit_purchase(&p);
         p
     }
+
+    // ------------------------------------------------------------------
+    // Agents (callable only with a vault-issued agent key)
+    // ------------------------------------------------------------------
+
+    /// Ask the vault to buy something for a task. Never panics on a policy
+    /// refusal: refusals are stored and returned so they stay on the record.
+    pub fn request_purchase(
+        &mut self,
+        task_id: TaskId,
+        mandate_hash: String,
+        quote: Quote,
+        signature: Base64VecU8,
+        reason: String,
+        idempotency_key: String,
+    ) -> Purchase {
+        let agent_pk = self.assert_agent();
+        require!(!idempotency_key.is_empty() && idempotency_key.len() <= MAX_SHORT, "idempotency_key must be 1..=64 chars");
+        let idem = format!("{}|{}", agent_pk, idempotency_key);
+        if let Some(id) = self.idempotency.get(&idem) {
+            // A retry: return the original decision, never act twice.
+            return self.purchase_or_panic(*id).clone();
+        }
+        require!(
+            quote.item.len() <= MAX_ITEM && quote.category.len() <= MAX_SHORT && quote.nonce.len() <= MAX_SHORT,
+            "quote field too long"
+        );
+        require!(
+            !quote.item.contains('\n') && !quote.category.contains('\n') && !quote.nonce.contains('\n'),
+            "quote fields must not contain newlines"
+        );
+
+        let now = env::block_timestamp_ms();
+        let decision = self.decide(&agent_pk, task_id, &mandate_hash, &quote, &signature, now);
+
+        // Count every request against the agent's hourly window (loop protection).
+        if let Some(a) = self.agents.get_mut(&agent_pk) {
+            if now.saturating_sub(a.window_start_ms) >= HOUR_MS {
+                a.window_start_ms = now;
+                a.window_count = 0;
+            }
+            a.window_count += 1;
+            a.requests += 1;
+        }
+
+        let id = self.purchases.len();
+        let version = self.tasks.get(&task_id).map(|t| t.version).unwrap_or(0);
+        let mut p = Purchase {
+            id,
+            task_id,
+            mandate_version: version,
+            agent: agent_pk.clone(),
+            seller: quote.seller.clone(),
+            item: quote.item.clone(),
+            category: quote.category.clone(),
+            description: truncate(&quote.description, MAX_TEXT),
+            price: quote.price,
+            reason: truncate(&reason, MAX_TEXT),
+            status: PurchaseStatus::Declined,
+            code: String::new(),
+            detail: String::new(),
+            quote_nonce: quote.nonce.clone(),
+            created_ms: now,
+            deliver_by_ms: 0,
+            delivered_ms: 0,
+            result_hash: None,
+            review_by_ms: 0,
+            settled_ms: 0,
+            reused_from: None,
+        };
+
+        let consumes_quote = !matches!(decision, Decision::Decline(..));
+        match decision {
+            Decision::Decline(code, detail) => {
+                p.code = code.into();
+                p.detail = detail;
+                p.settled_ms = now;
+            }
+            Decision::Reuse(from, detail) => {
+                let earlier = self.purchase_or_panic(from).clone();
+                p.status = PurchaseStatus::Reused;
+                p.code = "REUSED".into();
+                p.detail = detail;
+                p.price = U128(0);
+                p.result_hash = earlier.result_hash;
+                p.reused_from = Some(from);
+                p.settled_ms = now;
+            }
+            Decision::Hold(detail) => {
+                p.status = PurchaseStatus::PendingApproval;
+                p.code = "NEEDS_APPROVAL".into();
+                p.detail = detail;
+            }
+            Decision::Escrow(detail) => {
+                let window = self.task_or_panic(task_id).rules.delivery_window_ms;
+                self.reserve(task_id, quote.price.0);
+                p.status = PurchaseStatus::Escrowed;
+                p.code = "APPROVED_ESCROW".into();
+                p.detail = detail;
+                p.deliver_by_ms = now + window;
+            }
+        }
+        if consumes_quote {
+            self.quote_nonces.insert(format!("{}|{}", quote.seller, quote.nonce), true);
+        }
+        self.idempotency.insert(idem, id);
+        self.purchases.push(p.clone());
+        let code = p.code.clone();
+        self.append_log("purchase_requested", Some(id), &code);
+        self.emit_purchase(&p);
+        p
+    }
 }
