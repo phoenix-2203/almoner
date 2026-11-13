@@ -240,4 +240,27 @@ export class AlmonerVault {
       settleExpired: (purchase_id: number) => call<Purchase>("settle_expired", { purchase_id }, 100n * TGAS),
     };
   }
+
+  /** Client for the vault owner (their own account). */
+  owner(ownerId: string, ownerKey: KeyPairString) {
+    const acct = new Account(ownerId, this.rpcUrl, ownerKey);
+    const call = <T>(methodName: string, args: object, gas = 50n * TGAS, deposit: bigint = 0n) =>
+      acct.callFunction<T & object>({ contractId: this.vaultId, methodName, args, gas, deposit }) as Promise<T>;
+    return {
+      account: acct,
+      createTask: (rules: TaskInput) => call<TaskView>("create_task", { rules }),
+      updateTask: (task_id: number, rules: TaskInput) => call<TaskView>("update_task", { task_id, rules }),
+      setTaskStatus: (task_id: number, status: TaskStatus) => call<void>("set_task_status", { task_id, status }),
+      addAgent: (public_key: string, name: string, task_ids: number[], allowanceYocto?: string) =>
+        call<void>("add_agent", { public_key, name, task_ids, allowance: allowanceYocto ?? null }, 50n * TGAS),
+      revokeAgent: (public_key: string) => call<void>("revoke_agent", { public_key }),
+      approve: (purchase_id: number) => call<Purchase>("approve_purchase", { purchase_id }),
+      reject: (purchase_id: number, note?: string) => call<Purchase>("reject_purchase", { purchase_id, note: note ?? null }),
+      review: (purchase_id: number, accept: boolean, note?: string) =>
+        call<Purchase>("owner_review", { purchase_id, accept, note: note ?? null }, 100n * TGAS),
+      clearHold: (seller: string) => call<void>("clear_seller_hold", { seller }),
+      setFrozen: (frozen: boolean) => call<void>("set_frozen", { frozen }),
+      withdraw: (amount: string) => call<boolean>("withdraw", { amount }, 100n * TGAS),
+    };
+  }
 }
