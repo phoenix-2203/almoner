@@ -72,4 +72,8 @@ impl FungibleTokenCore for TestUsdc {
         self.ensure_registered(&receiver_id);
         self.token.ft_transfer_call(receiver_id, amount, memo, msg)
     }
+
+    fn ft_total_supply(&self) -> U128 {
+        self.token.ft_total_supply()
+    }
 }
