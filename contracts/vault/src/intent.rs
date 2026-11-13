@@ -93,3 +93,23 @@ pub fn quote_message(vault: &str, q: &Quote, description_hash_hex: &str) -> Stri
     )
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn disguises_are_undone() {
+        assert_eq!(normalize("G1FT-c@rd"), "giftcard");
+        assert_eq!(normalize("g i f t   c a r d"), "giftcard");
+        assert_eq!(normalize("gift%20card"), "giftcard");
+        assert_eq!(normalize("gift%2520card"), "giftcard");
+        assert_eq!(normalize("Pr3m1um $tock data"), "premiumstockdata");
+    }
+
+    #[test]
+    fn percent_decode_keeps_invalid() {
+        assert_eq!(percent_decode("100%"), "100%");
+        assert_eq!(percent_decode("a%zzb"), "a%zzb");
+        assert_eq!(percent_decode("%41"), "A");
+    }
+}
