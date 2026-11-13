@@ -281,4 +281,50 @@ impl Vault {
         self.append_log("agent_revoked", None, "AGENT_KEY_DELETED");
         Promise::new(env::current_account_id()).delete_key(public_key)
     }
+
+    pub fn approve_purchase(&mut self, purchase_id: PurchaseId) -> Purchase {
+        self.assert_owner();
+        let p = self.purchase_or_panic(purchase_id).clone();
+        require!(p.status == PurchaseStatus::PendingApproval, "purchase is not waiting for approval");
+        let now = env::block_timestamp_ms();
+        // Re-check the hard rules under the current mandate. Approval can't override a limit.
+        let task = self.task_or_panic(p.task_id).clone();
+        let price = p.price.0;
+        let failure: Option<(&str, String)> = if self.frozen {
+            Some(("VAULT_FROZEN", "Vault is frozen.".into()))
+        } else if task.status != TaskStatus::Active {
+            Some(("TASK_NOT_ACTIVE", "Task is no longer active.".into()))
+        } else if now > task.rules.expires_at_ms {
+            Some(("TASK_EXPIRED", "Task has expired.".into()))
+        } else if self.sellers.get(&p.seller).map(|s| s.on_hold).unwrap_or(true) {
+            Some(("SELLER_ON_HOLD", "Seller is on hold or no longer registered.".into()))
+        } else if price > task.rules.max_per_purchase.0 {
+            Some(("OVER_PURCHASE_LIMIT", "Price is above the current per-purchase limit.".into()))
+        } else if task.spent + task.reserved + price > task.rules.budget.0 {
+            Some(("OVER_BUDGET", "Not enough budget left on the task.".into()))
+        } else if self.available() < price {
+            Some(("INSUFFICIENT_FUNDS", "Vault doesn't hold enough free funds.".into()))
+        } else {
+            None
+        };
+        let mut updated = p.clone();
+        if let Some((code, detail)) = failure {
+            updated.status = PurchaseStatus::Rejected;
+            updated.code = code.into();
+            updated.detail = format!("Approval re-check failed: {}", detail);
+            updated.settled_ms = now;
+            self.store_purchase(updated.clone());
+            self.append_log("approval_failed", Some(purchase_id), code);
+            return updated;
+        }
+        self.reserve(p.task_id, price);
+        updated.status = PurchaseStatus::Escrowed;
+        updated.code = "APPROVED_BY_OWNER".into();
+        updated.detail = "Approved by the owner after re-checking every hard rule; funds held in escrow.".into();
+        updated.deliver_by_ms = now + task.rules.delivery_window_ms;
+        self.store_purchase(updated.clone());
+        self.append_log("purchase_approved", Some(purchase_id), "APPROVED_BY_OWNER");
+        self.emit_purchase(&updated);
+        updated
+    }
 }
