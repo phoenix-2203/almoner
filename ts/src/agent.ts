@@ -17,3 +17,10 @@ export interface Offer {
   settled: number;
 }
 
+const post = async (path: string, body: unknown) => {
+  const r = await fetch(`${SELLERS_URL}${path}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+  const j: any = await r.json();
+  if (!r.ok) throw new Error(j.error ?? `HTTP ${r.status}`);
+  return j;
+};
+
