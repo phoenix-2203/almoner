@@ -59,3 +59,16 @@ pub fn normalize(s: &str) -> String {
     out
 }
 
+/// Returns the first blocked term found in the quote, if any.
+pub fn find_blocked(rules: &TaskInput, q: &Quote) -> Option<String> {
+    let haystack = normalize(&format!("{} {} {}", q.item, q.category, q.description));
+    rules.blocked_terms.iter().find_map(|t| {
+        let n = normalize(t);
+        if !n.is_empty() && haystack.contains(&n) {
+            Some(t.clone())
+        } else {
+            None
+        }
+    })
+}
+
