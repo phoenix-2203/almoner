@@ -53,3 +53,8 @@ function deliverable(seller: string, item: string): string {
   });
 }
 
+const json = (res: ServerResponse, code: number, body: unknown) => {
+  res.writeHead(code, { "content-type": "application/json", "access-control-allow-origin": "*" });
+  res.end(JSON.stringify(body));
+};
+
