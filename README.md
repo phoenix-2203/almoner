@@ -37,3 +37,14 @@ sequenceDiagram
     Note over V: reject or missed delivery → refund to the task,<br/>seller on hold, reputation drops
 ```
 
+## Why NEAR, specifically
+
+| NEAR feature | How Almoner uses it | Why it matters |
+| --- | --- | --- |
+| **Function-call access keys** | The vault adds a key **to its own account**. The key can only call `request_purchase`, `confirm_delivery` and `settle_expired`, and has a gas allowance. Revoking it is `delete_key`. | The agent never holds a wallet. Its key can't transfer tokens or NEAR, add keys, deploy, or call anything else. The protocol enforces this, not Almoner's code. |
+| `signer_account_pk` | Each agent is identified by the exact key that signed the call. | Several agents can share one vault, each with its own tasks and limits. |
+| Contracts that manage their own keys | `add_agent` / `revoke_agent` are vault methods the owner calls. | You can optionally delete the vault's full-access key with `npm run owner -- lock-vault --yes`. After that, nobody, Almoner included, can move funds except through the contract's rules. |
+| NEP-141 + `ft_on_transfer` | The vault accepts only its configured stablecoin. Payouts use `ft_transfer` with a callback. | A failed payout is rolled back and funds stay reserved (see test `failed_payout_restores_funds`). |
+| `ed25519_verify` host function | Seller quotes are verified on-chain. | Price, item, category and payee can't be edited between the seller and the vault. |
+| NEP-297 events | Every decision emits `EVENT_JSON` (`standard: "almoner"`). | Indexers and explorers can follow the night. |
+
