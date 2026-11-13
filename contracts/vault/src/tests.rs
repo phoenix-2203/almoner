@@ -68,3 +68,15 @@ fn agent_key(seed: u8) -> PublicKey {
     PublicKey::from_parts(CurveType::ED25519, k.verifying_key().to_bytes().to_vec()).unwrap()
 }
 
+fn ctx(predecessor: AccountId, signer_pk: Option<PublicKey>, now_ms: u64) -> VMContextBuilder {
+    let mut b = VMContextBuilder::new();
+    b.current_account_id(vault())
+        .predecessor_account_id(predecessor.clone())
+        .signer_account_id(predecessor)
+        .block_timestamp(now_ms * 1_000_000);
+    if let Some(pk) = signer_pk {
+        b.signer_account_pk(pk);
+    }
+    b
+}
+
