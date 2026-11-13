@@ -392,3 +392,19 @@ fn failed_payout_restores_funds() {
     assert_eq!(w.v.get_task(1).unwrap().spent.0, 0);
 }
 
+#[test]
+fn stale_mandate_hash_is_refused() {
+    let mut w = setup();
+    as_owner(T0 + 500);
+    let mut r = rules();
+    r.budget = U128(4 * USDC);
+    let t = w.v.update_task(1, r);
+    assert_eq!(t.version, 2);
+    let p = buy(&mut w, "honest", "https://datadesk/r", "report", USDC / 10, "n1", "k1");
+    assert_eq!(p.code, "MANDATE_CHANGED");
+    w.hash = t.mandate_hash;
+    let ok = buy(&mut w, "honest", "https://datadesk/r", "report", USDC / 10, "n2", "k2");
+    assert_eq!(ok.status, PurchaseStatus::Escrowed);
+    assert_eq!(ok.mandate_version, 2);
+}
+
