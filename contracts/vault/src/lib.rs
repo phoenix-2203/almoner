@@ -936,4 +936,8 @@ impl Vault {
         t.reserved -= amount;
         self.reserved -= amount;
     }
+
+    fn available(&self) -> u128 {
+        self.balance.saturating_sub(self.reserved)
+    }
 }
