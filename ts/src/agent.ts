@@ -64,3 +64,16 @@ export async function negotiate(
     .sort((a, b) => b.reputationBps - a.reputationBps || Number(BigInt(a.signed.quote.price) - BigInt(b.signed.quote.price)));
 }
 
+/** A delivered result is acceptable if it hashes to what the seller committed on-chain and isn't junk. */
+export function checkDelivery(result: string, onChainHash: string | null): { ok: boolean; why: string } {
+  if (!onChainHash || sha256hex(result) !== onChainHash) return { ok: false, why: "result doesn't match the hash the seller committed on-chain" };
+  if (!result.trim()) return { ok: false, why: "empty body" };
+  try {
+    const j = JSON.parse(result);
+    if (j && typeof j === "object" && "error" in j) return { ok: false, why: `error message instead of data: ${j.error}` };
+  } catch {
+    return { ok: false, why: "not valid JSON" };
+  }
+  return { ok: true, why: "hash matches and content is data" };
+}
+
