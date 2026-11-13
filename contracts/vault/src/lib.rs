@@ -51,3 +51,9 @@ const MAX_ITEM: usize = 256;
 const MAX_TEXT: usize = 280;
 const MAX_SHORT: usize = 64;
 
+#[ext_contract(ext_ft)]
+#[allow(dead_code)]
+trait FungibleToken {
+    fn ft_transfer(&mut self, receiver_id: AccountId, amount: U128, memo: Option<String>);
+}
+
