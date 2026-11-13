@@ -234,3 +234,11 @@ fn approval_cannot_override_a_tightened_limit() {
     assert_eq!(a.code, "OVER_PURCHASE_LIMIT");
 }
 
+#[test]
+fn off_purpose_category_is_refused_within_budget() {
+    let mut w = setup();
+    let p = buy(&mut w, "honest", "https://datadesk/vpn", "software", USDC / 10, "n1", "k1");
+    assert_eq!(p.status, PurchaseStatus::Declined);
+    assert_eq!(p.code, "INTENT_MISMATCH");
+}
+
