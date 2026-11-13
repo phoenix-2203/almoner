@@ -105,3 +105,18 @@ impl FungibleTokenResolver for TestUsdc {
     }
 }
 
+#[near]
+impl FungibleTokenMetadataProvider for TestUsdc {
+    fn ft_metadata(&self) -> FungibleTokenMetadata {
+        FungibleTokenMetadata {
+            spec: FT_METADATA_SPEC.to_string(),
+            name: "Almoner Test USDC (testnet only)".to_string(),
+            symbol: "tUSDC".to_string(),
+            icon: None,
+            reference: None,
+            reference_hash: None,
+            decimals: 6,
+        }
+    }
+}
+
