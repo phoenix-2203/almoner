@@ -104,4 +104,14 @@
       <td>${esc(e.kind)}${e.purchase_id != null ? ` #${e.purchase_id}` : ""}</td><td class="mono">${esc(e.code)}</td><td class="mono muted">${esc(e.hash.slice(0, 16))}…</td></tr>`).join("");
     $("updated").textContent = `Updated ${new Date().toLocaleTimeString()}.`;
   }
+
+  $("pick").onsubmit = (ev) => {
+    ev.preventDefault();
+    cfg.vault = $("vaultInput").value.trim();
+    history.replaceState(null, "", `?vault=${encodeURIComponent(cfg.vault)}`);
+    render().catch(showError);
+  };
+  const showError = (e) => { $("vault").innerHTML = card("Couldn't read the vault", esc(e.message || e), "bad"); };
+  render().catch(showError);
+  setInterval(() => render().catch(showError), 15000);
 })();
