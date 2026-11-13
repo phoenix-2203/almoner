@@ -53,3 +53,11 @@ impl TestUsdc {
     }
 }
 
+#[near]
+impl FungibleTokenCore for TestUsdc {
+    #[payable]
+    fn ft_transfer(&mut self, receiver_id: AccountId, amount: U128, memo: Option<String>) {
+        self.ensure_registered(&receiver_id);
+        self.token.ft_transfer(receiver_id, amount, memo)
+    }
+}
