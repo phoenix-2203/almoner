@@ -732,4 +732,17 @@ impl Vault {
         let limit = limit.unwrap_or(100).min(200);
         (from..self.log.len()).take(limit as usize).filter_map(|i| self.log.get(i).cloned()).collect()
     }
+
+    /// Recompute the whole hash chain on-chain and compare to the stored head.
+    pub fn verify_log(&self) -> bool {
+        let mut prev = "0".repeat(64);
+        for i in 0..self.log.len() {
+            let e = self.log.get(i).unwrap_or_else(|| env::abort());
+            if e.prev_hash != prev || Self::log_hash(e.seq, e.at_ms, &e.kind, e.purchase_id, &e.code, &prev) != e.hash {
+                return false;
+            }
+            prev = e.hash.clone();
+        }
+        prev == self.log_head
+    }
 }
