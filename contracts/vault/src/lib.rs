@@ -608,4 +608,40 @@ impl Vault {
         self.append_log("deposit", None, "DEPOSIT");
         PromiseOrValue::Value(U128(0))
     }
+
+    #[private]
+    pub fn on_payout(&mut self, purchase_id: PurchaseId, code: String) -> Purchase {
+        let ok = env::promise_result_checked(0, 64).is_ok();
+        let mut p = self.purchase_or_panic(purchase_id).clone();
+        let now = env::block_timestamp_ms();
+        if ok {
+            p.status = PurchaseStatus::Paid;
+            p.code = code.clone();
+            p.settled_ms = now;
+            if let Some(s) = self.sellers.get_mut(&p.seller) {
+                if code == "AUTO_RELEASED" {
+                    s.stats.auto_released += 1;
+                } else {
+                    s.stats.delivered_ok += 1;
+                }
+                s.stats.earned = U128(s.stats.earned.0 + p.price.0);
+            }
+            self.memory.insert(format!("{}|{}", p.seller, p.item), purchase_id);
+            self.append_log("paid", Some(purchase_id), &code);
+        } else {
+            // Undo the optimistic accounting: funds stay reserved, purchase back to Delivered.
+            let task = self.tasks.get_mut(&p.task_id).unwrap_or_else(|| env::abort());
+            task.spent -= p.price.0;
+            task.reserved += p.price.0;
+            self.balance += p.price.0;
+            self.reserved += p.price.0;
+            p.status = PurchaseStatus::Delivered;
+            p.code = "PAYOUT_FAILED".into();
+            p.detail = "Token transfer failed; funds are still reserved. Review again to retry.".into();
+            self.append_log("payout_failed", Some(purchase_id), "PAYOUT_FAILED");
+        }
+        self.store_purchase(p.clone());
+        self.emit_purchase(&p);
+        p
+    }
 }
