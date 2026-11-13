@@ -59,3 +59,16 @@ pub struct Task {
     pub updated_ms: u64,
 }
 
+#[near(serializers = [borsh])]
+#[derive(Clone, Debug)]
+pub struct Agent {
+    pub name: String,
+    pub public_key: String,
+    pub task_ids: Vec<TaskId>,
+    pub active: bool,
+    pub added_ms: u64,
+    pub window_start_ms: u64,
+    pub window_count: u32,
+    pub requests: u32,
+}
+
