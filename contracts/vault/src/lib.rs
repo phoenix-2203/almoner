@@ -92,3 +92,7 @@ pub struct Vault {
     log_head: String,
 }
 
+fn sha256_hex(data: &[u8]) -> String {
+    hex(&env::sha256_array(data))
+}
+
