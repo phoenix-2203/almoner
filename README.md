@@ -15,3 +15,25 @@ Built from scratch at NEAR HACKATHON, Nov 2026. NEAR is the core: see [Why NEAR,
 
 ---
 
+## What it does in one picture
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant O as Owner (person)
+    participant V as Almoner Vault (NEAR contract)
+    participant A as Agent (vault-issued key)
+    participant S as Seller agent
+    O->>V: create_task(mandate)  ← the owner's tx is the signature
+    O->>V: add_agent(pk)  → vault adds a function-call key to itself
+    A->>S: ask for quotes, counter-offer
+    S-->>A: signed quote (ed25519 over vault, seller, item, category, price, expiry, nonce)
+    A->>V: request_purchase(task, mandate_hash, quote, sig)
+    Note over V: checks mandate version, assignment, rate limit,<br/>signature, replay, seller list and hold, memory,<br/>IntentLock, limits, budget, approval line
+    V-->>A: Declined / Reused ($0) / PendingApproval / Escrowed
+    S->>V: deliver(purchase, result_hash)
+    A->>V: confirm_delivery(accept | reject)
+    V->>S: ft_transfer (accept, or auto-release when the buyer is silent)
+    Note over V: reject or missed delivery → refund to the task,<br/>seller on hold, reputation drops
+```
+
