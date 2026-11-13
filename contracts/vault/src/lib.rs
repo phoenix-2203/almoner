@@ -44,3 +44,10 @@ pub const SELLER_REGISTRATION_DEPOSIT: NearToken = NearToken::from_millinear(10)
 pub const DEFAULT_AGENT_ALLOWANCE: NearToken = NearToken::from_millinear(250);
 pub const AGENT_METHODS: &str = "request_purchase,confirm_delivery,settle_expired";
 
+const HOUR_MS: u64 = 3_600_000;
+const MIN_WINDOW_MS: u64 = 60_000;
+const MAX_WINDOW_MS: u64 = 7 * 24 * HOUR_MS;
+const MAX_ITEM: usize = 256;
+const MAX_TEXT: usize = 280;
+const MAX_SHORT: usize = 64;
+
