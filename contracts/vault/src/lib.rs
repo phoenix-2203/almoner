@@ -745,4 +745,10 @@ impl Vault {
         }
         prev == self.log_head
     }
+
+    /// The message a seller must sign for `quote` (for SDKs and debugging).
+    pub fn quote_message(&self, quote: Quote) -> String {
+        let dh = sha256_hex(quote.description.as_bytes());
+        intent::quote_message(env::current_account_id().as_str(), &quote, &dh)
+    }
 }
