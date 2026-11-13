@@ -10,7 +10,8 @@ AI agents now buy data, APIs and compute by themselves, a few cents at a time. A
 | --- | --- |
 | Vault contract | [`vault.almoner-502c7b80.testnet`](https://testnet.nearblocks.io/address/vault.almoner-502c7b80.testnet) |
 | Token (tUSDC, test only) | [`tusdc.almoner-502c7b80.testnet`](https://testnet.nearblocks.io/address/tusdc.almoner-502c7b80.testnet) |
-| Dashboard | https://phoenix-2203.github.io/almoner/ (reads the vault straight from NEAR RPC) |
+| Website | https://phoenix-2203.github.io/almoner/ |
+| **Try it in your browser** | https://phoenix-2203.github.io/almoner/try.html: the agent's key is loaded; press a button to sign a real attack, and browse the live vault (read straight from NEAR RPC) |
 | Public challenge | [CHALLENGE.md](CHALLENGE.md): **the agent's private key is published. Try to take the money.** |
 
 ```bash
@@ -222,7 +223,8 @@ ts/src/bootstrap.ts    One-command testnet setup
 ts/src/owner.ts        Owner CLI
 ts/src/attack.ts       Public challenge: six attacks signed with the published agent key
 ts/src/challenge-setup.ts  Owner-only: open the public challenge
-web/                   Read-only dashboard (static, no build step)
+web/                   Landing page (index.html) and the product page (try.html): attack console + live vault
+ts/src/web-bundle.ts   Entry for the browser build of near-api-js (npm run build:web -> web/vendor/near.js)
 scripts/build.sh       Contract → wasm
 ```
 
