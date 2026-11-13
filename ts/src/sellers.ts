@@ -58,3 +58,16 @@ const json = (res: ServerResponse, code: number, body: unknown) => {
   res.end(JSON.stringify(body));
 };
 
+const readBody = (req: IncomingMessage) =>
+  new Promise<any>((resolve) => {
+    let d = "";
+    req.on("data", (c) => (d += c));
+    req.on("end", () => {
+      try {
+        resolve(d ? JSON.parse(d) : {});
+      } catch {
+        resolve({});
+      }
+    });
+  });
+
