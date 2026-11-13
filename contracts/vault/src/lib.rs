@@ -706,4 +706,8 @@ impl Vault {
     pub fn get_sellers(&self) -> Vec<SellerView> {
         self.sellers.values().map(Self::seller_view).collect()
     }
+
+    pub fn get_seller(&self, account_id: AccountId) -> Option<SellerView> {
+        self.sellers.get(&account_id).map(Self::seller_view)
+    }
 }
