@@ -1053,4 +1053,11 @@ impl Vault {
             near_sdk::serde_json::json!({"standard": "almoner", "version": "1.0.0", "event": event, "data": [data]})
         ));
     }
+
+    fn emit_purchase(&self, p: &Purchase) {
+        self.emit("purchase", near_sdk::serde_json::json!({
+            "id": p.id, "task_id": p.task_id, "seller": p.seller, "price": p.price,
+            "status": p.status, "code": p.code
+        }));
+    }
 }
