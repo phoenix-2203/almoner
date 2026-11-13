@@ -492,3 +492,17 @@ fn owner_cannot_withdraw_escrowed_funds() {
     let _ = w.v.withdraw(U128(10 * USDC));
 }
 
+#[test]
+fn log_is_hash_chained() {
+    let mut w = setup();
+    buy(&mut w, "honest", "https://datadesk/r", "report", USDC / 10, "n1", "k1");
+    buy(&mut w, "honest", "https://shop/giftcard", "report", USDC / 10, "n2", "k2");
+    assert!(w.v.verify_log());
+    let log = w.v.get_log(None, None);
+    assert!(log.len() >= 6);
+    for pair in log.windows(2) {
+        assert_eq!(pair[1].prev_hash, pair[0].hash);
+    }
+    assert_eq!(w.v.get_vault().log_head, log.last().unwrap().hash);
+}
+
