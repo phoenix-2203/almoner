@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 description = "Almoner Vault: per-task mandates, contract-issued agent keys, signed quotes, escrow and refunds on NEAR"
 license = "MIT"
-repository = "https://github.com/phoenix-2203/almoner-near"
+repository = "https://github.com/phoenix-2203/almoner"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
