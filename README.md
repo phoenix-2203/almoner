@@ -224,3 +224,11 @@ scripts/build.sh       Contract → wasm
 | [tsx](https://www.npmjs.com/package/tsx), [typescript](https://www.npmjs.com/package/typescript), [@noble/curves](https://www.npmjs.com/package/@noble/curves) (tests) | ts/ | Run and typecheck scripts; deterministic test key |
 | Claude (Anthropic) | whole repo | Track research, design, and writing code, tests and docs with the builder. Every test in the repo runs. |
 
+## Roadmap (NEAR-native)
+
+1. **Pay in any token through NEAR Intents.** Sellers quote in tUSDC/USDC; buyers fund vaults from any asset via 1Click.
+2. **Optional private reviewer on NEAR AI Cloud.** A TEE model judges purpose. It can only *hold* a purchase, never approve one, and its signed verdict is recorded.
+3. **Shared seller registry contract.** Portable reputation across vaults.
+4. **Third-party delivery evaluators**, as an alternative to buyer review.
+5. **NEAR mainnet with native USDC.** Audit first.
+
