@@ -10,3 +10,7 @@ import { normalize, preflight, quoteMessage, signQuote, type Quote } from "../sr
 import { checkDelivery } from "../src/agent.js";
 import { ROOT } from "../src/config.js";
 
+const FIXTURE = join(ROOT, "contracts", "vault", "src", "fixtures", "ts_quote.json");
+// Deterministic key (testnet fixture only): 32 bytes of 0x01 as seed.
+const seed = new Uint8Array(32).fill(1);
+
