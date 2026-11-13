@@ -77,3 +77,19 @@ pub fn category_allowed(rules: &TaskInput, category: &str) -> bool {
         || rules.categories.iter().any(|c| c.eq_ignore_ascii_case(category.trim()))
 }
 
+/// The exact bytes a seller signs for a quote. Newline-separated; the
+/// description is hashed so it may contain any characters.
+pub fn quote_message(vault: &str, q: &Quote, description_hash_hex: &str) -> String {
+    format!(
+        "almoner-quote/v1\n{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}",
+        vault,
+        q.seller,
+        q.item,
+        q.category,
+        q.price.0,
+        q.expires_at_ms,
+        q.nonce,
+        description_hash_hex
+    )
+}
+
