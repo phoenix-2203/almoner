@@ -482,3 +482,13 @@ fn foreign_token_deposit_is_refused() {
     let _ = w.v.ft_on_transfer(owner(), U128(1_000 * USDC), String::new());
 }
 
+#[test]
+#[should_panic(expected = "amount exceeds available (unreserved) funds")]
+fn owner_cannot_withdraw_escrowed_funds() {
+    let mut w = setup();
+    let p = buy(&mut w, "honest", "https://datadesk/premium", "report", USDC / 2, "n1", "k1");
+    as_owner(T0 + 2_000);
+    w.v.approve_purchase(p.id);
+    let _ = w.v.withdraw(U128(10 * USDC));
+}
+
