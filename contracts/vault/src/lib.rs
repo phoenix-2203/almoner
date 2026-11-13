@@ -940,4 +940,8 @@ impl Vault {
     fn available(&self) -> u128 {
         self.balance.saturating_sub(self.reserved)
     }
+
+    fn assert_owner(&self) {
+        require!(env::predecessor_account_id() == self.owner, "only the owner can do this");
+    }
 }
