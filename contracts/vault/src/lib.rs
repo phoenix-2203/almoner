@@ -702,4 +702,8 @@ impl Vault {
             })
             .collect()
     }
+
+    pub fn get_sellers(&self) -> Vec<SellerView> {
+        self.sellers.values().map(Self::seller_view).collect()
+    }
 }
