@@ -422,4 +422,25 @@ impl Vault {
         }
         self.append_log("seller_registered", None, "OK");
     }
+
+    /// Seller marks an escrowed purchase delivered, committing to a hash of the result.
+    pub fn deliver(&mut self, purchase_id: PurchaseId, result_hash: String) -> Purchase {
+        let mut p = self.purchase_or_panic(purchase_id).clone();
+        require!(env::predecessor_account_id() == p.seller, "only the seller can deliver");
+        require!(p.status == PurchaseStatus::Escrowed, "purchase is not awaiting delivery");
+        let now = env::block_timestamp_ms();
+        require!(now <= p.deliver_by_ms, "delivery window has passed");
+        require!(!result_hash.is_empty() && result_hash.len() <= 128, "result_hash must be 1..=128 chars");
+        let review = self.task_or_panic(p.task_id).rules.review_window_ms;
+        p.status = PurchaseStatus::Delivered;
+        p.code = "DELIVERED".into();
+        p.detail = "Seller delivered; waiting for the buyer's review.".into();
+        p.result_hash = Some(result_hash);
+        p.delivered_ms = now;
+        p.review_by_ms = now + review;
+        self.store_purchase(p.clone());
+        self.append_log("delivered", Some(purchase_id), "DELIVERED");
+        self.emit_purchase(&p);
+        p
+    }
 }
