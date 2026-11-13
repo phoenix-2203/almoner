@@ -161,3 +161,7 @@ async function main() {
   console.log(`\nDone. Vault: ${state.vault.accountId}\nNext: \`npm run sellers\` in one terminal, \`npm run demo\` in another.`);
 }
 
+main().catch((e) => {
+  console.error(e?.message ?? e);
+  process.exit(1);
+});
