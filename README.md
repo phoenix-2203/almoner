@@ -10,7 +10,7 @@ AI agents now buy data, APIs and compute by themselves, a few cents at a time. A
 | --- | --- |
 | Vault contract | [`vault.almoner-502c7b80.testnet`](https://testnet.nearblocks.io/address/vault.almoner-502c7b80.testnet) |
 | Token (tUSDC, test only) | [`tusdc.almoner-502c7b80.testnet`](https://testnet.nearblocks.io/address/tusdc.almoner-502c7b80.testnet) |
-| Website | https://phoenix-2203.github.io/almoner/ |
+| Website | https://almoner.duckdns.org/ (mirror: https://phoenix-2203.github.io/almoner/) |
 | **Try it in your browser** | https://phoenix-2203.github.io/almoner/try.html: the agent's key is loaded; press a button to sign a real attack, and browse the live vault (read straight from NEAR RPC) |
 | Public challenge | [CHALLENGE.md](CHALLENGE.md): **the agent's private key is published. Try to take the money.** |
 
