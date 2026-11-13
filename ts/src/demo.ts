@@ -13,3 +13,9 @@ const vault = new AlmonerVault(state.vault.accountId, RPC);
 const agent = vault.agent(state.agent.key);
 let step = 0;
 
+const head = (s: string) => console.log(`\n\x1b[1m${++step}. ${s}\x1b[0m`);
+const show = (p: Purchase) => {
+  const c = p.status === "Paid" || p.status === "Escrowed" || p.status === "Reused" ? "32" : p.status === "PendingApproval" ? "33" : "31";
+  console.log(`   #${p.id} \x1b[${c}m${p.status}\x1b[0m ${p.code} · ${fmtUsdc(p.price)} · ${p.detail}`);
+};
+
