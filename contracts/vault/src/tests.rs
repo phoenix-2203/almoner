@@ -296,3 +296,15 @@ fn replayed_and_expired_quotes_are_refused() {
     assert_eq!(c.code, "QUOTE_EXPIRED");
 }
 
+#[test]
+fn unknown_or_unlisted_seller_is_refused() {
+    let mut w = setup();
+    let stranger = Seller::new("stranger.testnet", 7);
+    as_account(&stranger.account, T0, SELLER_REGISTRATION_DEPOSIT);
+    w.v.register_seller("stranger".into(), stranger.pk(), None);
+    let (q, sig) = stranger.quote("https://stranger/r", "report", "d", USDC / 10, "n1");
+    as_agent(&w.agent, T0 + 1_000);
+    let p = w.v.request_purchase(1, w.hash.clone(), q, sig, "x".into(), "k1".into());
+    assert_eq!(p.code, "SELLER_NOT_ALLOWED");
+}
+
