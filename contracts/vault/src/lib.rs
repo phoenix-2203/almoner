@@ -870,4 +870,32 @@ impl Vault {
         }
         Escrow("Within every rule; funds held in escrow until the seller delivers.".into())
     }
+
+    fn internal_review(&mut self, purchase_id: PurchaseId, accept: bool, note: Option<String>, by: &str) -> PromiseOrValue<Purchase> {
+        let mut p = self.purchase_or_panic(purchase_id).clone();
+        require!(p.status == PurchaseStatus::Delivered, "purchase is not awaiting review");
+        if accept {
+            let detail = format!("Delivery accepted by the {}; seller paid the quoted price.", by);
+            return PromiseOrValue::Promise(self.start_payout(p, "PAID_ACCEPTED", &detail));
+        }
+        let now = env::block_timestamp_ms();
+        self.release(p.task_id, p.price.0);
+        p.status = PurchaseStatus::Refunded;
+        p.code = "REFUND_REJECTED".into();
+        p.detail = format!(
+            "Delivery rejected by the {}: {}. Reservation returned; seller put on hold.",
+            by,
+            note.map(|n| truncate(&n, MAX_TEXT)).unwrap_or_else(|| "no reason given".into())
+        );
+        p.settled_ms = now;
+        if let Some(s) = self.sellers.get_mut(&p.seller) {
+            s.stats.rejected += 1;
+            s.on_hold = true;
+            s.hold_reason = format!("delivery rejected on purchase #{}", p.id);
+        }
+        self.store_purchase(p.clone());
+        self.append_log("refunded", Some(purchase_id), "REFUND_REJECTED");
+        self.emit_purchase(&p);
+        PromiseOrValue::Value(p)
+    }
 }
