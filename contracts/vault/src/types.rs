@@ -37,3 +37,11 @@ pub struct TaskInput {
     pub expires_at_ms: u64,
 }
 
+#[near(serializers = [borsh, json])]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum TaskStatus {
+    Active,
+    Paused,
+    Closed,
+}
+
