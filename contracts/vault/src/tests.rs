@@ -242,3 +242,13 @@ fn off_purpose_category_is_refused_within_budget() {
     assert_eq!(p.code, "INTENT_MISMATCH");
 }
 
+#[test]
+fn disguised_blocked_item_is_refused() {
+    let mut w = setup();
+    for (i, item) in ["https://shop/G1FT-c@rd-50", "https://shop/g%20i%20f%20t%20card", "https://shop/GiFt_CaRd"].iter().enumerate() {
+        let p = buy(&mut w, "honest", item, "report", USDC / 10, &format!("n{}", i), &format!("k{}", i));
+        assert_eq!(p.code, "INTENT_MISMATCH", "{} slipped through", item);
+    }
+    assert_eq!(w.v.get_vault().reserved.0, 0);
+}
+
