@@ -10,6 +10,7 @@
   const when = (ms) => (ms ? new Date(ms).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "");
   const explorer = cfg.network === "mainnet" ? "https://nearblocks.io" : "https://testnet.nearblocks.io";
   const tone = { Paid: "ok", Reused: "ok", Escrowed: "info", Delivered: "info", PayoutPending: "info", PendingApproval: "warn", Refunded: "warn", Rejected: "bad", Declined: "bad" };
+  const ago = (ms) => { const s = Math.max(0, (Date.now() - ms) / 1000); return s < 90 ? "just now" : s < 5400 ? Math.round(s / 60) + " min ago" : s < 129600 ? Math.round(s / 3600) + " h ago" : Math.round(s / 86400) + " d ago"; };
   let filter = "All";
 
   async function view(method, args = {}) {
@@ -54,7 +55,7 @@
     const words = { Paid: "Paid after delivery check", Reused: "Reused for $0", Escrowed: "Held in escrow", Delivered: "Delivered, awaiting review", PayoutPending: "Paying seller", PendingApproval: "Waiting for a person", Refunded: "Refunded", Rejected: "Rejected by owner", Declined: "Refused" };
     $("feed").innerHTML = purchases.slice(0, 6).map((p) => `<li><span class="chip ${tone[p.status] || ""}">${esc(p.status === "Declined" ? p.code : p.status)}</span>
       <span class="what"><b>${esc(p.item.replace(/^https?:\/\//, ""))}</b><span>${esc(words[p.status] || p.status)} · ${esc(p.detail)}</span></span>
-      <span class="amt">${usdc(p.price)}</span></li>`).join("") || `<li class="muted">No decisions yet.</li>`;
+      <span class="amt">${usdc(p.price)}<small>${ago(p.created_ms)}</small></span></li>`).join("") || `<li class="muted">No decisions yet.</li>`;
     const refused = purchases.filter((p) => p.status === "Declined").length;
     const refunded = purchases.filter((p) => p.status === "Refunded").length;
     const stat = (v, k) => `<div class="stat"><div class="v">${v}</div><div class="k">${esc(k)}</div></div>`;
@@ -134,7 +135,10 @@
     history.replaceState(null, "", `?vault=${encodeURIComponent(cfg.vault)}`);
     render().catch(showError);
   };
-  const showError = (e) => { $("vault").innerHTML = card("Couldn't read the vault", esc(e.message || e), "bad"); };
+  const showError = (e) => {
+    $("vault").innerHTML = card("Couldn't read the vault", esc(e.message || e), "bad");
+    if ($("feed").children.length <= 1) $("feed").innerHTML = `<li class="muted">Couldn't reach NEAR just now. Retrying every 15 seconds.</li>`;
+  };
   render().catch(showError);
   setInterval(() => render().catch(showError), 15000);
 })();
