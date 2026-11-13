@@ -63,3 +63,8 @@ impl Seller {
     }
 }
 
+fn agent_key(seed: u8) -> PublicKey {
+    let k = SigningKey::from_bytes(&[seed; 32]);
+    PublicKey::from_parts(CurveType::ED25519, k.verifying_key().to_bytes().to_vec()).unwrap()
+}
+
