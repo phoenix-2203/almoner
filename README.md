@@ -91,3 +91,89 @@ Other attacks covered by tests:
 
 ---
 
+## Run it
+
+### Prerequisites
+
+- Rust ≥ 1.95 with `wasm32-unknown-unknown`, plus [cargo-near](https://github.com/near/cargo-near). `rust-toolchain.toml` sets this up.
+- Node 22+.
+- A NEAR **testnet** account with about 9 NEAR. [Create one with near-cli-rs or MyNearWallet](https://docs.near.org/tools/near-cli). Use testnet only.
+
+### 1. Run the tests (no network needed)
+
+```bash
+cargo test --workspace          # → test result: ok. 31 passed (vault) + 2 passed (token)
+cd ts && npm ci && npm test     # → 4 pass: the TS-signed quote fixture matches what Rust verifies
+```
+
+### 2. Build the contracts
+
+```bash
+./scripts/build.sh              # → wasm/almoner_vault.wasm, wasm/almoner_test_usdc.wasm
+```
+
+CI also builds both files on every push and uploads them as the `wasm` artifact. If your local build fails, download the artifact into `./wasm`.
+
+### 3. Deploy and set everything up on testnet (one command)
+
+```bash
+cd ts
+cp .env.example .env            # set OWNER_ACCOUNT_ID and OWNER_PRIVATE_KEY (testnet!)
+npm run bootstrap
+```
+
+You should see:
+
+```
+  + created tusdc.<you>.testnet / vault.<you>.testnet / datadesk.<you>.testnet / junkdata.<you>.testnet
+  + deployed tUSDC … + deployed Almoner Vault …
+  + funded vault with 20 tUSDC
+  + seller datadesk… registered, + seller junkdata… registered
+  + task #1 signed, mandate 9fc7abafc4270ffb…
+  + agent key issued: ed25519:… (function-call only, 1 NEAR gas allowance)
+```
+
+Keys for the accounts it creates are saved to `ts/.almoner/state.json` (gitignored, mode 600). Re-running `bootstrap` skips steps that are already done.
+
+### 4. Run the night shift
+
+```bash
+npm run sellers                 # terminal 1: DataDesk + JunkData on :8787
+npm run demo                    # terminal 2: the 8 steps above, live on testnet
+```
+
+The demo ends with a morning report:
+
+```
+paid 2 · reused 1 · refunded 1 · waiting 1 · declined 3
+seller DataDesk: delivery score 100% over 2 settled · earned 0.146 tUSDC
+seller JunkData: delivery score 0% over 1 settled · ON HOLD
+decision log: N entries, hash chain verified on-chain: true
+```
+
+### 5. Look at it
+
+```bash
+npx serve ../web                # or open web/index.html; bootstrap wrote web/config.js
+```
+
+The dashboard reads the vault straight from NEAR RPC, with no backend. It shows:
+- Every decision with its reason
+- Task mandates, with the mandate hash **recomputed in your browser**
+- Seller reputation
+- The log hash chain, **recomputed in your browser** and also checked by the contract's `verify_log()`
+
+To view another vault, add `?vault=<account>` to the URL.
+
+### 6. Owner actions
+
+```bash
+npm run owner -- status
+npm run owner -- approve 7      # approve the held premium report (rules re-checked)
+npm run owner -- freeze         # emergency stop
+npm run owner -- revoke-agent   # deletes the agent's key from the vault
+npm run owner -- lock-vault --yes   # optional: delete the vault's full-access key (no more upgrades)
+```
+
+---
+
