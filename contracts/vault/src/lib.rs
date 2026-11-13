@@ -1046,4 +1046,11 @@ impl Vault {
         });
         self.log_head = hash;
     }
+
+    fn emit(&self, event: &str, data: near_sdk::serde_json::Value) {
+        env::log_str(&format!(
+            "EVENT_JSON:{}",
+            near_sdk::serde_json::json!({"standard": "almoner", "version": "1.0.0", "event": event, "data": [data]})
+        ));
+    }
 }
