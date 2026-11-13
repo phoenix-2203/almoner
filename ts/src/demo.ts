@@ -19,3 +19,9 @@ const show = (p: Purchase) => {
   console.log(`   #${p.id} \x1b[${c}m${p.status}\x1b[0m ${p.code} · ${fmtUsdc(p.price)} · ${p.detail}`);
 };
 
+async function quoteFrom(seller: string, item: string, offer?: string) {
+  const r = await fetch(`${SELLERS_URL}/${seller}/quote`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ item, offer }) });
+  const j: any = await r.json();
+  return { quote: j.quote, signature: j.signature } as SignedQuote;
+}
+
