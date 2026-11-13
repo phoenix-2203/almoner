@@ -408,3 +408,19 @@ fn stale_mandate_hash_is_refused() {
     assert_eq!(ok.mandate_version, 2);
 }
 
+#[test]
+fn rate_limit_stops_a_looping_agent() {
+    let mut w = setup();
+    as_owner(T0);
+    let mut r = rules();
+    r.max_purchases_per_hour = 3;
+    w.hash = w.v.update_task(1, r).mandate_hash;
+    let mut codes = vec![];
+    for i in 0..5 {
+        let p = buy(&mut w, "honest", &format!("https://datadesk/loop{}", i), "report", USDC / 100, &format!("n{}", i), &format!("k{}", i));
+        codes.push(p.code);
+    }
+    assert_eq!(&codes[3], "RATE_LIMITED");
+    assert_eq!(&codes[4], "RATE_LIMITED");
+}
+
