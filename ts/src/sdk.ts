@@ -182,3 +182,14 @@ export function normalize(s: string): string {
   return out;
 }
 
+export function preflight(rules: TaskInput, q: Quote): { ok: true } | { ok: false; code: string; detail: string } {
+  if (rules.categories.length && !rules.categories.includes(q.category.trim().toLowerCase())) {
+    return { ok: false, code: "INTENT_MISMATCH", detail: `category '${q.category}' not in mandate` };
+  }
+  const hay = normalize(`${q.item} ${q.category} ${q.description}`);
+  const hit = rules.blocked_terms.find((t) => normalize(t) && hay.includes(normalize(t)));
+  if (hit) return { ok: false, code: "INTENT_MISMATCH", detail: `matches blocked term '${hit}'` };
+  if (BigInt(q.price) > BigInt(rules.max_per_purchase)) return { ok: false, code: "OVER_PURCHASE_LIMIT", detail: "above per-purchase limit" };
+  return { ok: true };
+}
+
