@@ -193,3 +193,8 @@ export function preflight(rules: TaskInput, q: Quote): { ok: true } | { ok: fals
   return { ok: true };
 }
 
+export const explorerTx = (network: string, hash: string) =>
+  network === "mainnet" ? `https://nearblocks.io/txns/${hash}` : `https://testnet.nearblocks.io/txns/${hash}`;
+export const explorerAccount = (network: string, id: string) =>
+  network === "mainnet" ? `https://nearblocks.io/address/${id}` : `https://testnet.nearblocks.io/address/${id}`;
+
