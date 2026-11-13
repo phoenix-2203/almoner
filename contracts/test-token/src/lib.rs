@@ -60,4 +60,16 @@ impl FungibleTokenCore for TestUsdc {
         self.ensure_registered(&receiver_id);
         self.token.ft_transfer(receiver_id, amount, memo)
     }
+
+    #[payable]
+    fn ft_transfer_call(
+        &mut self,
+        receiver_id: AccountId,
+        amount: U128,
+        memo: Option<String>,
+        msg: String,
+    ) -> PromiseOrValue<U128> {
+        self.ensure_registered(&receiver_id);
+        self.token.ft_transfer_call(receiver_id, amount, memo, msg)
+    }
 }
