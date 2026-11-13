@@ -45,3 +45,17 @@ pub enum TaskStatus {
     Closed,
 }
 
+#[near(serializers = [borsh])]
+#[derive(Clone, Debug)]
+pub struct Task {
+    pub id: TaskId,
+    pub rules: TaskInput,
+    pub status: TaskStatus,
+    pub version: u32,
+    pub mandate_hash: String,
+    pub spent: u128,
+    pub reserved: u128,
+    pub created_ms: u64,
+    pub updated_ms: u64,
+}
+
