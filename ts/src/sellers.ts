@@ -37,3 +37,19 @@ export const CATALOG: Record<string, CatalogItem[]> = {
   ],
 };
 
+function deliverable(seller: string, item: string): string {
+  if (seller === "junkdata") {
+    // Junk: alternate between an empty body and an error message.
+    return item.includes("volume") ? "" : JSON.stringify({ error: "upstream timeout" });
+  }
+  return JSON.stringify({
+    source: item,
+    generated_by: "DataDesk",
+    summary: "Sample dataset (demo only): agent payment activity on NEAR, by asset.",
+    rows: [
+      { asset: "tUSDC", payments: 58_120 },
+      { asset: "wNEAR", payments: 21_404 },
+    ],
+  });
+}
+
