@@ -370,4 +370,16 @@ impl Vault {
         self.frozen = frozen;
         self.append_log("vault_frozen", None, if frozen { "FROZEN" } else { "UNFROZEN" });
     }
+
+    pub fn withdraw(&mut self, amount: U128) -> Promise {
+        self.assert_owner();
+        require!(amount.0 > 0 && amount.0 <= self.available(), "amount exceeds available (unreserved) funds");
+        self.balance -= amount.0;
+        self.append_log("withdraw", None, "WITHDRAW_SENT");
+        ext_ft::ext(self.token.clone())
+            .with_attached_deposit(ONE_YOCTO)
+            .with_static_gas(GAS_FT_TRANSFER)
+            .ft_transfer(self.owner.clone(), amount, Some("almoner vault withdraw".into()))
+            .then(Self::ext(env::current_account_id()).with_static_gas(GAS_CALLBACK).on_withdraw(amount))
+    }
 }
