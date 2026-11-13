@@ -272,3 +272,12 @@ fn redirected_payee_fails_signature() {
     assert_eq!(p.code, "QUOTE_INVALID");
 }
 
+#[test]
+fn quote_for_another_vault_is_refused() {
+    let mut w = setup();
+    let (q, sig) = w.honest.quote_for(&acc("other.testnet"), "https://datadesk/r", "report", "d", USDC / 10, "n1", T0 + 600_000);
+    as_agent(&w.agent, T0 + 1_000);
+    let p = w.v.request_purchase(1, w.hash.clone(), q, sig, "x".into(), "k1".into());
+    assert_eq!(p.code, "QUOTE_INVALID");
+}
+
