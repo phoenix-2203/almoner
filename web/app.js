@@ -30,4 +30,6 @@
     const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
     return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, "0")).join("");
   }
+
+  const card = (k, v, cls = "") => `<div class="card"><div class="k">${esc(k)}</div><div class="v ${cls}">${v}</div></div>`;
 })();
