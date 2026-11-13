@@ -151,3 +151,32 @@ fn buy(w: &mut World, s: &str, item: &str, cat: &str, price: u128, nonce: &str, 
     w.v.request_purchase(1, w.hash.clone(), q, sig, "for tonight's brief".into(), idem.into())
 }
 
+#[test]
+fn happy_path_escrow_deliver_accept_pay() {
+    let mut w = setup();
+    let p = buy(&mut w, "honest", "https://datadesk/ai-agents-report", "report", USDC / 10, "n1", "k1");
+    assert_eq!(p.status, PurchaseStatus::Escrowed, "{}", p.detail);
+    assert_eq!(w.v.get_vault().reserved.0, USDC / 10);
+
+    as_account(&w.honest.account, T0 + 2_000, NearToken::from_yoctonear(0));
+    let d = w.v.deliver(p.id, "sha256:abc".into());
+    assert_eq!(d.status, PurchaseStatus::Delivered);
+
+    as_agent(&w.agent, T0 + 3_000);
+    let _ = w.v.confirm_delivery(p.id, true, None);
+    assert_eq!(w.v.get_purchase(p.id).unwrap().status, PurchaseStatus::PayoutPending);
+    assert_eq!(w.v.get_vault().balance.0, 10 * USDC - USDC / 10);
+
+    as_callback(T0 + 4_000, true);
+    let paid = w.v.on_payout(p.id, "PAID_ACCEPTED".into());
+    assert_eq!(paid.status, PurchaseStatus::Paid);
+    let s = w.v.get_seller(w.honest.account.clone()).unwrap();
+    assert_eq!(s.stats.delivered_ok, 1);
+    assert_eq!(s.stats.earned.0, USDC / 10);
+    assert_eq!(s.delivery_score_bps, 10_000);
+    let t = w.v.get_task(1).unwrap();
+    assert_eq!(t.spent.0, USDC / 10);
+    assert_eq!(t.reserved.0, 0);
+    assert!(w.v.verify_log());
+}
+
