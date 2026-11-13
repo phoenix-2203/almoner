@@ -675,4 +675,8 @@ impl Vault {
             log_head: self.log_head.clone(),
         }
     }
+
+    pub fn get_task(&self, task_id: TaskId) -> Option<TaskView> {
+        self.tasks.get(&task_id).map(|_| self.task_view(task_id))
+    }
 }
