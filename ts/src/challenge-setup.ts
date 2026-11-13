@@ -12,7 +12,7 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { KeyPair, type KeyPairString } from "near-api-js";
-import { AlmonerVault, explorerAccount, usdc, type TaskInput } from "./sdk.js";
+import { AlmonerVault, explorerAccount, fmtNear, usdc, type TaskInput } from "./sdk.js";
 import { loadState, NETWORK, ownerCreds, ROOT, RPC } from "./config.js";
 
 export const CHALLENGE_FILE = join(ROOT, "challenge.json");
@@ -27,6 +27,30 @@ async function main() {
 
   let c: any = existsSync(CHALLENGE_FILE) ? JSON.parse(readFileSync(CHALLENGE_FILE, "utf8")) : null;
   if (c && c.vault !== state.vault.accountId) c = null;
+
+  const ALLOWANCE = 10n ** 24n; // 1 NEAR of gas: roughly thirty attempts, then the key is spent
+  const issueKey = async (taskId: number) => {
+    const agentKey = KeyPair.fromRandom("ed25519").toString() as KeyPairString;
+    const publicKey = KeyPair.fromString(agentKey).getPublicKey().toString();
+    await owner.addAgent(publicKey, "public-challenge", [taskId], ALLOWANCE.toString());
+    console.log(`  + vault issued the challenge key ${publicKey}`);
+    return { agentKey, publicKey };
+  };
+  if (c) {
+    // An allowance can't be topped up: when the published key runs low, replace it.
+    const left = await vault.keyAllowance(c.agentPublicKey);
+    if (left == null || (left >= 0n && left < ALLOWANCE / 3n)) {
+      console.log(`  = published key is ${left == null ? "gone" : "low on gas (" + fmtNear(left) + ")"}; replacing it`);
+      const old = c.agentPublicKey;
+      const k = await issueKey(c.taskId);
+      c.agentPublicKey = k.publicKey;
+      c.agentPrivateKey = k.agentKey;
+      writeFileSync(CHALLENGE_FILE, JSON.stringify(c, null, 2) + "\n");
+      if (left != null) await owner.revokeAgent(old).catch(() => {});
+    } else {
+      console.log(`  = challenge already open; key has ${fmtNear(left)} of gas left`);
+    }
+  }
 
   if (!c) {
     const rules: TaskInput = {
@@ -46,11 +70,7 @@ async function main() {
     };
     const task = await owner.createTask(rules);
     console.log(`  + task #${task.id} "Public challenge" signed`);
-    const agentKey = KeyPair.fromRandom("ed25519").toString() as KeyPairString;
-    const publicKey = KeyPair.fromString(agentKey).getPublicKey().toString();
-    // 0.1 NEAR of gas: enough for roughly a hundred attempts, then the key is spent.
-    await owner.addAgent(publicKey, "public-challenge", [task.id], (10n ** 23n).toString());
-    console.log(`  + vault issued the challenge key ${publicKey}`);
+    const { agentKey, publicKey } = await issueKey(task.id);
     c = {
       network: NETWORK,
       rpc: RPC,
@@ -62,8 +82,6 @@ async function main() {
       agentPrivateKey: agentKey,
     };
     writeFileSync(CHALLENGE_FILE, JSON.stringify(c, null, 2) + "\n");
-  } else {
-    console.log("  = challenge already open; rewriting the docs");
   }
 
   const v = await vault.getVault();
@@ -118,8 +136,9 @@ Write your own attack: the key works with any NEAR tool
 
 ## Honest limits
 
-- The key has a gas allowance of 0.1 NEAR. Spam can burn that allowance, after
-  which the key stops working. That is the worst case: the funds don't move.
+- The key has a gas allowance of 1 NEAR, enough for roughly thirty attempts.
+  Spam can burn that allowance, after which the key stops working and we publish
+  a fresh one here. That is the worst case: the funds don't move.
 - The key belongs to its own task with a 1 tUSDC budget and one allowed seller.
   The seller only signs quotes for real purchases, so without a seller-signed
   quote nothing can even be put into escrow.
