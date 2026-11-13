@@ -125,4 +125,20 @@ mod tests {
     use super::*;
     use near_sdk::test_utils::{accounts, VMContextBuilder};
     use near_sdk::{testing_env, NearToken};
+
+    #[test]
+    fn faucet_and_transfer_auto_register() {
+        let mut ctx = VMContextBuilder::new();
+        testing_env!(ctx.predecessor_account_id(accounts(1)).build());
+        let mut t = TestUsdc::new();
+        t.faucet(None, U128(5_000_000));
+        assert_eq!(t.ft_balance_of(accounts(1)).0, 5_000_000);
+        testing_env!(ctx
+            .predecessor_account_id(accounts(1))
+            .attached_deposit(NearToken::from_yoctonear(1))
+            .build());
+        t.ft_transfer(accounts(2), U128(2_000_000), None);
+        assert_eq!(t.ft_balance_of(accounts(2)).0, 2_000_000);
+        assert_eq!(t.ft_total_supply().0, 5_000_000);
+    }
 }
