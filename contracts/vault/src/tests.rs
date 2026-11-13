@@ -80,3 +80,23 @@ fn ctx(predecessor: AccountId, signer_pk: Option<PublicKey>, now_ms: u64) -> VMC
     b
 }
 
+fn as_owner(now: u64) {
+    testing_env!(ctx(owner(), None, now).build());
+}
+fn as_agent(pk: &PublicKey, now: u64) {
+    testing_env!(ctx(vault(), Some(pk.clone()), now).build());
+}
+fn as_account(a: &AccountId, now: u64, deposit: NearToken) {
+    testing_env!(ctx(a.clone(), None, now).attached_deposit(deposit).build());
+}
+fn as_callback(now: u64, ok: bool) {
+    let r = if ok { PromiseResult::Successful(vec![]) } else { PromiseResult::Failed };
+    testing_env!(
+        ctx(vault(), None, now).build(),
+        test_vm_config(),
+        RuntimeFeesConfig::test(),
+        Default::default(),
+        vec![r]
+    );
+}
+
