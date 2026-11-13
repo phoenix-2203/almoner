@@ -327,4 +327,18 @@ impl Vault {
         self.emit_purchase(&updated);
         updated
     }
+
+    pub fn reject_purchase(&mut self, purchase_id: PurchaseId, note: Option<String>) -> Purchase {
+        self.assert_owner();
+        let mut p = self.purchase_or_panic(purchase_id).clone();
+        require!(p.status == PurchaseStatus::PendingApproval, "purchase is not waiting for approval");
+        p.status = PurchaseStatus::Rejected;
+        p.code = "REJECTED_BY_OWNER".into();
+        p.detail = note.map(|n| truncate(&n, MAX_TEXT)).unwrap_or_else(|| "Rejected by the owner.".into());
+        p.settled_ms = env::block_timestamp_ms();
+        self.store_purchase(p.clone());
+        self.append_log("purchase_rejected", Some(purchase_id), "REJECTED_BY_OWNER");
+        self.emit_purchase(&p);
+        p
+    }
 }
