@@ -159,3 +159,12 @@ export function quoteMessage(vault: string, q: Quote): string {
   ].join("\n");
 }
 
+export function signQuote(vault: string, q: Quote, quoteKey: KeyPairString): SignedQuote {
+  for (const f of [q.item, q.category, q.nonce]) {
+    if (f.includes("\n")) throw new Error("quote fields must not contain newlines");
+  }
+  const kp = KeyPair.fromString(quoteKey);
+  const sig = kp.sign(new TextEncoder().encode(quoteMessage(vault, q))).signature;
+  return { quote: q, signature: Buffer.from(sig).toString("base64") };
+}
+
