@@ -180,3 +180,22 @@ fn happy_path_escrow_deliver_accept_pay() {
     assert!(w.v.verify_log());
 }
 
+#[test]
+fn identical_item_is_reused_for_free() {
+    let mut w = setup();
+    let p = buy(&mut w, "honest", "https://datadesk/r", "report", USDC / 10, "n1", "k1");
+    as_account(&w.honest.account, T0 + 2_000, NearToken::from_yoctonear(0));
+    w.v.deliver(p.id, "h1".into());
+    as_agent(&w.agent, T0 + 3_000);
+    let _ = w.v.confirm_delivery(p.id, true, None);
+    as_callback(T0 + 4_000, true);
+    w.v.on_payout(p.id, "PAID_ACCEPTED".into());
+
+    let again = buy(&mut w, "honest", "https://datadesk/r", "report", USDC / 10, "n2", "k2");
+    assert_eq!(again.status, PurchaseStatus::Reused);
+    assert_eq!(again.price.0, 0);
+    assert_eq!(again.reused_from, Some(p.id));
+    assert_eq!(again.result_hash.as_deref(), Some("h1"));
+    assert_eq!(w.v.get_task(1).unwrap().spent.0, USDC / 10);
+}
+
