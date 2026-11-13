@@ -138,3 +138,9 @@ export interface LogEntry {
 
 export const sha256hex = (data: string | Uint8Array) => createHash("sha256").update(data).digest("hex");
 
+export const usdc = (amount: number) => BigInt(Math.round(amount * 10 ** USDC_DECIMALS)).toString();
+export const fmtUsdc = (base: string | bigint) => {
+  const n = Number(BigInt(base)) / 10 ** USDC_DECIMALS;
+  return `${n.toFixed(n < 1 ? 3 : 2)} tUSDC`;
+};
+
