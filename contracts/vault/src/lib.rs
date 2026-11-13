@@ -679,4 +679,8 @@ impl Vault {
     pub fn get_task(&self, task_id: TaskId) -> Option<TaskView> {
         self.tasks.get(&task_id).map(|_| self.task_view(task_id))
     }
+
+    pub fn get_tasks(&self) -> Vec<TaskView> {
+        self.tasks.keys().map(|id| self.task_view(*id)).collect()
+    }
 }
