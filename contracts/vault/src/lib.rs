@@ -944,4 +944,18 @@ impl Vault {
     fn assert_owner(&self) {
         require!(env::predecessor_account_id() == self.owner, "only the owner can do this");
     }
+
+    /// Agent methods must be signed by a vault-issued key on the vault account.
+    fn assert_agent(&self) -> String {
+        require!(
+            env::predecessor_account_id() == env::current_account_id(),
+            "agent methods must be called with a vault-issued agent key"
+        );
+        let pk = String::from(&env::signer_account_pk());
+        match self.agents.get(&pk) {
+            Some(a) if a.active => pk,
+            Some(_) => env::panic_str("agent key revoked"),
+            None => env::panic_str("this key isn't a registered agent"),
+        }
+    }
 }
