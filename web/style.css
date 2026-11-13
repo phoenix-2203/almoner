@@ -30,3 +30,5 @@ a { color:var(--info); }
 .task { overflow-wrap:anywhere; }
 @media (max-width:600px){ .task dl { grid-template-columns:1fr; } .task dt { margin-top:6px; } main { padding:12px 16px 32px; } header { padding:12px 16px; } }
 html, body { overflow-x: clip; }
+.challenge { background:var(--card); border:1px solid var(--info); border-radius:12px; padding:12px 14px; margin:0 0 12px; }
+.challenge .chip { margin-left:6px; }
