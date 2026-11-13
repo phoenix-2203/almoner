@@ -28,3 +28,12 @@ function findWasm(name: string): string {
   return hit;
 }
 
+async function exists(id: string) {
+  try {
+    await new Account(id, RPC).getState();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
