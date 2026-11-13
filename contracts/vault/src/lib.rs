@@ -183,4 +183,28 @@ impl Vault {
         self.append_log("task_signed", None, &format!("TASK_{}_V1", id));
         self.task_view(id)
     }
+
+    /// Replace a task's rules. Bumps the version; agents holding the old
+    /// mandate hash are refused until they re-read it.
+    pub fn update_task(&mut self, task_id: TaskId, rules: TaskInput) -> TaskView {
+        self.assert_owner();
+        Self::validate_rules(&rules);
+        let mut task = self.task_or_panic(task_id).clone();
+        require!(task.status != TaskStatus::Closed, "task is closed");
+        require!(
+            rules.budget.0 >= task.spent + task.reserved,
+            "budget below what is already spent and reserved"
+        );
+        task.version += 1;
+        task.mandate_hash = mandate_hash(&rules);
+        task.rules = rules;
+        task.updated_ms = env::block_timestamp_ms();
+        let code = format!("TASK_{}_V{}", task_id, task.version);
+        self.emit("task_signed", near_sdk::serde_json::json!({
+            "task_id": task_id, "version": task.version, "mandate_hash": task.mandate_hash
+        }));
+        self.tasks.insert(task_id, task);
+        self.append_log("task_signed", None, &code);
+        self.task_view(task_id)
+    }
 }
