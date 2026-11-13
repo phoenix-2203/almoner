@@ -217,4 +217,43 @@ impl Vault {
         let code = format!("TASK_{}_{:?}", task_id, status).to_uppercase();
         self.append_log("task_status", None, &code);
     }
+
+    /// Issue an agent key: a function-call access key on this vault account,
+    /// restricted to the agent methods. The vault adds the key itself.
+    pub fn add_agent(
+        &mut self,
+        public_key: PublicKey,
+        name: String,
+        task_ids: Vec<TaskId>,
+        allowance: Option<NearToken>,
+    ) -> Promise {
+        self.assert_owner();
+        let pk = String::from(&public_key);
+        require!(!self.agents.get(&pk).map(|a| a.active).unwrap_or(false), "agent key already active");
+        for id in &task_ids {
+            require!(self.tasks.contains_key(id), "unknown task in task_ids");
+        }
+        self.agents.insert(
+            pk.clone(),
+            Agent {
+                name: truncate(&name, MAX_SHORT),
+                public_key: pk,
+                task_ids,
+                active: true,
+                added_ms: env::block_timestamp_ms(),
+                window_start_ms: 0,
+                window_count: 0,
+                requests: 0,
+            },
+        );
+        self.append_log("agent_added", None, "AGENT_KEY_ISSUED");
+        let allowance = Allowance::limited(allowance.unwrap_or(DEFAULT_AGENT_ALLOWANCE))
+            .unwrap_or_else(|| env::panic_str("allowance must be > 0"));
+        Promise::new(env::current_account_id()).add_access_key_allowance(
+            public_key,
+            allowance,
+            env::current_account_id(),
+            AGENT_METHODS,
+        )
+    }
 }
