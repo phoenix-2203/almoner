@@ -15,3 +15,6 @@ use near_contract_standards::fungible_token::FungibleToken;
 use near_sdk::json_types::U128;
 use near_sdk::{env, near, require, AccountId, BorshStorageKey, PanicOnDefault, PromiseOrValue};
 
+/// 1,000 tUSDC with 6 decimals.
+pub const FAUCET_MAX: u128 = 1_000 * 1_000_000;
+
