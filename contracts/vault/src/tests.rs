@@ -118,3 +118,11 @@ fn rules() -> TaskInput {
     }
 }
 
+struct World {
+    v: Vault,
+    agent: PublicKey,
+    honest: Seller,
+    junk: Seller,
+    hash: String,
+}
+
