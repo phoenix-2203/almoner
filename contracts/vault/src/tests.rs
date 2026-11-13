@@ -506,3 +506,10 @@ fn log_is_hash_chained() {
     assert_eq!(w.v.get_vault().log_head, log.last().unwrap().hash);
 }
 
+#[test]
+fn mandate_hash_matches_published_json() {
+    let w = setup();
+    let json = w.v.get_mandate_json(1).unwrap();
+    assert_eq!(sha256_hex(json.as_bytes()), w.hash);
+}
+
