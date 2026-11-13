@@ -958,4 +958,21 @@ impl Vault {
             None => env::panic_str("this key isn't a registered agent"),
         }
     }
+
+    fn validate_rules(r: &TaskInput) {
+        require!(!r.name.is_empty() && r.name.len() <= MAX_SHORT, "name must be 1..=64 chars");
+        require!(r.purpose.len() <= MAX_TEXT, "purpose too long");
+        require!(r.categories.len() <= 16 && r.blocked_terms.len() <= 32 && r.allowed_sellers.len() <= 32, "too many list entries");
+        require!(r.categories.iter().all(|c| !c.is_empty() && c.len() <= MAX_SHORT && c == &c.to_lowercase()), "categories must be lowercase, 1..=64 chars");
+        require!(r.blocked_terms.iter().all(|t| t.len() <= MAX_SHORT), "blocked term too long");
+        require!(r.max_per_purchase.0 <= r.budget.0, "max_per_purchase above budget");
+        require!(r.max_purchases_per_hour >= 1, "max_purchases_per_hour must be >= 1");
+        require!(r.reuse_window_ms <= MAX_WINDOW_MS, "reuse window too long");
+        require!(
+            (MIN_WINDOW_MS..=MAX_WINDOW_MS).contains(&r.delivery_window_ms)
+                && (MIN_WINDOW_MS..=MAX_WINDOW_MS).contains(&r.review_window_ms),
+            "delivery and review windows must be between 1 minute and 7 days"
+        );
+        require!(r.expires_at_ms > env::block_timestamp_ms(), "expires_at_ms must be in the future");
+    }
 }
