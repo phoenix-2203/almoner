@@ -77,3 +77,16 @@ export function checkDelivery(result: string, onChainHash: string | null): { ok:
   return { ok: true, why: "hash matches and content is data" };
 }
 
+/** Ask the seller to fulfil an escrowed purchase, verify, then accept or reject on-chain. */
+export async function collectAndReview(
+  vault: AlmonerVault,
+  agent: ReturnType<AlmonerVault["agent"]>,
+  sellerName: string,
+  p: Purchase,
+): Promise<{ purchase: Purchase; result: string; check: { ok: boolean; why: string } }> {
+  const { result } = await post(`/${sellerName}/fulfil`, { purchase_id: p.id });
+  const delivered = (await vault.getPurchase(p.id))!;
+  const check = checkDelivery(result, delivered.result_hash);
+  const purchase = await agent.confirmDelivery(p.id, check.ok, check.ok ? undefined : check.why);
+  return { purchase, result, check };
+}
