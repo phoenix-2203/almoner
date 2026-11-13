@@ -133,3 +133,4 @@ export function startSellers(port = Number(process.env.SELLERS_PORT ?? 8787)) {
   return server;
 }
 
+if (process.argv[1]?.endsWith("sellers.ts")) startSellers();
