@@ -564,4 +564,35 @@ impl Vault {
         require!(agent.task_ids.contains(&p.task_id), "agent is not assigned to this purchase's task");
         self.internal_review(purchase_id, accept, note, "agent")
     }
+
+    /// Anyone (including agent keys) may settle a purchase whose window has passed:
+    /// no delivery in time -> refund; delivered but unreviewed -> pay the seller.
+    pub fn settle_expired(&mut self, purchase_id: PurchaseId) -> PromiseOrValue<Purchase> {
+        let mut p = self.purchase_or_panic(purchase_id).clone();
+        let now = env::block_timestamp_ms();
+        match p.status {
+            PurchaseStatus::Escrowed => {
+                require!(now > p.deliver_by_ms, "delivery window still open");
+                self.release(p.task_id, p.price.0);
+                p.status = PurchaseStatus::Refunded;
+                p.code = "REFUND_NOT_DELIVERED".into();
+                p.detail = "Seller didn't deliver in time; the reservation went back to the task. Seller put on hold.".into();
+                p.settled_ms = now;
+                if let Some(s) = self.sellers.get_mut(&p.seller) {
+                    s.stats.missed += 1;
+                    s.on_hold = true;
+                    s.hold_reason = format!("missed delivery on purchase #{}", p.id);
+                }
+                self.store_purchase(p.clone());
+                self.append_log("refunded", Some(purchase_id), "REFUND_NOT_DELIVERED");
+                self.emit_purchase(&p);
+                PromiseOrValue::Value(p)
+            }
+            PurchaseStatus::Delivered => {
+                require!(now > p.review_by_ms, "review window still open");
+                PromiseOrValue::Promise(self.start_payout(p, "AUTO_RELEASED", "Buyer didn't review in time; payment released to the seller."))
+            }
+            _ => env::panic_str("nothing to settle for this purchase"),
+        }
+    }
 }
