@@ -726,4 +726,10 @@ impl Vault {
             (from..len).take(limit as usize).filter_map(|i| self.purchases.get(i).cloned()).collect()
         }
     }
+
+    pub fn get_log(&self, from_index: Option<u32>, limit: Option<u32>) -> Vec<LogEntry> {
+        let from = from_index.unwrap_or(0);
+        let limit = limit.unwrap_or(100).min(200);
+        (from..self.log.len()).take(limit as usize).filter_map(|i| self.log.get(i).cloned()).collect()
+    }
 }
