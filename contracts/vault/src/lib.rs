@@ -57,3 +57,16 @@ trait FungibleToken {
     fn ft_transfer(&mut self, receiver_id: AccountId, amount: U128, memo: Option<String>);
 }
 
+#[derive(BorshStorageKey)]
+#[near]
+enum StorageKey {
+    Tasks,
+    Agents,
+    Sellers,
+    Purchases,
+    Idempotency,
+    Memory,
+    QuoteNonces,
+    Log,
+}
+
