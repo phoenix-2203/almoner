@@ -10,7 +10,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { randomBytes } from "node:crypto";
 import { Account, KeyPair, type KeyPairString } from "near-api-js";
-import { AlmonerVault, explorerAccount, fmtUsdc, newNonce, signQuote, TGAS, usdc, type Purchase, type Quote } from "./sdk.js";
+import { AlmonerVault, explorerAccount, fmtNear, fmtUsdc, newNonce, signQuote, TGAS, usdc, type Purchase, type Quote } from "./sdk.js";
 import { ROOT } from "./config.js";
 
 const file = join(ROOT, "challenge.json");
@@ -67,18 +67,21 @@ async function main() {
   if (!task) throw new Error("challenge task not found");
   console.log(`Almoner public challenge · vault ${c.vault} holds ${fmtUsdc(before)}`);
   console.log(`Signing as the vault with the published agent key ${c.agentPublicKey}`);
+  const left = await vault.keyAllowance(c.agentPublicKey);
+  if (left == null) throw new Error("The published key has been replaced. Pull the latest challenge.json.");
+  console.log(`Gas allowance left on the key: ${fmtNear(left)} (each attempt spends some; at zero the key stops working)`);
 
-  await protocol("Transfer 1 NEAR out of the vault account", () =>
-    thief.transfer({ receiverId: LOOT, amount: 10n ** 24n }));
+  await protocol("Transfer NEAR out of the vault account", () =>
+    thief.transfer({ receiverId: LOOT, amount: 1n }));
 
   await protocol("Add our own full-access key to the vault account", () =>
     thief.addFullAccessKey(KeyPair.fromRandom("ed25519").getPublicKey()));
 
   await protocol("Call ft_transfer on the token contract directly", () =>
-    thief.callFunction({ contractId: c.token, methodName: "ft_transfer", args: { receiver_id: LOOT, amount: before }, deposit: 1n, gas: 30n * TGAS }));
+    thief.callFunction({ contractId: c.token, methodName: "ft_transfer", args: { receiver_id: LOOT, amount: before }, deposit: 1n, gas: 10n * TGAS }));
 
   await protocol("Call the vault's owner-only withdraw", () =>
-    thief.callFunction({ contractId: c.vault, methodName: "withdraw", args: { amount: before }, gas: 100n * TGAS }));
+    thief.callFunction({ contractId: c.vault, methodName: "withdraw", args: { amount: before }, gas: 10n * TGAS }));
 
   const forger = KeyPair.fromRandom("ed25519").toString() as KeyPairString;
   const quote = (seller: string): Quote => ({
@@ -91,7 +94,7 @@ async function main() {
     nonce: newNonce(),
   });
   const ask = (q: Quote) =>
-    agent.requestPurchase({ task_id: c.taskId, mandate_hash: task.mandate_hash, signed: signQuote(c.vault, q, forger), reason: "public challenge", idempotency_key: randomBytes(8).toString("hex") });
+    agent.requestPurchase({ task_id: c.taskId, mandate_hash: task.mandate_hash, signed: signQuote(c.vault, q, forger), reason: "public challenge", idempotency_key: randomBytes(8).toString("hex"), gas: 30n * TGAS });
 
   await contract("Ask the vault to pay a quote we signed ourselves in the seller's name", () => ask(quote(c.seller)));
   await contract("Ask the vault to pay a 'seller' account we control", () => ask(quote(LOOT)));
