@@ -45,4 +45,11 @@ impl TestUsdc {
         self.token.internal_deposit(&to, amount.0);
         FtMint { owner_id: &to, amount, memo: Some("faucet") }.emit();
     }
+
+    fn ensure_registered(&mut self, account_id: &AccountId) {
+        if !self.token.accounts.contains_key(account_id) {
+            self.token.internal_register_account(account_id);
+        }
+    }
 }
+
