@@ -269,4 +269,16 @@ impl Vault {
         a.task_ids = task_ids;
         self.append_log("agent_assigned", None, "OK");
     }
+
+    /// Revoke an agent: mark inactive and delete its access key from the vault.
+    pub fn revoke_agent(&mut self, public_key: PublicKey) -> Promise {
+        self.assert_owner();
+        let a = self
+            .agents
+            .get_mut(&String::from(&public_key))
+            .unwrap_or_else(|| env::panic_str("unknown agent"));
+        a.active = false;
+        self.append_log("agent_revoked", None, "AGENT_KEY_DELETED");
+        Promise::new(env::current_account_id()).delete_key(public_key)
+    }
 }
