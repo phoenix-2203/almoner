@@ -37,3 +37,25 @@ pub fn percent_decode(s: &str) -> String {
     String::from_utf8_lossy(&out).into_owned()
 }
 
+/// Lowercase, map leetspeak and keep only a-z0-9.
+pub fn normalize(s: &str) -> String {
+    let decoded = percent_decode(&percent_decode(s));
+    let mut out = String::with_capacity(decoded.len());
+    for c in decoded.chars() {
+        let c = c.to_ascii_lowercase();
+        let mapped = match c {
+            '0' => 'o',
+            '1' | '!' | '|' => 'i',
+            '3' => 'e',
+            '4' | '@' => 'a',
+            '5' | '$' => 's',
+            '7' => 't',
+            '8' => 'b',
+            c if c.is_ascii_alphanumeric() => c,
+            _ => continue,
+        };
+        out.push(mapped);
+    }
+    out
+}
+
