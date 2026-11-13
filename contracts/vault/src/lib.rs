@@ -714,4 +714,16 @@ impl Vault {
     pub fn get_purchase(&self, purchase_id: PurchaseId) -> Option<Purchase> {
         self.purchases.get(purchase_id).cloned()
     }
+
+    /// Newest first when `newest_first` is true (default).
+    pub fn get_purchases(&self, from_index: Option<u32>, limit: Option<u32>, newest_first: Option<bool>) -> Vec<Purchase> {
+        let len = self.purchases.len();
+        let limit = limit.unwrap_or(50).min(100);
+        let from = from_index.unwrap_or(0);
+        if newest_first.unwrap_or(true) {
+            (0..len).rev().skip(from as usize).take(limit as usize).filter_map(|i| self.purchases.get(i).cloned()).collect()
+        } else {
+            (from..len).take(limit as usize).filter_map(|i| self.purchases.get(i).cloned()).collect()
+        }
+    }
 }
