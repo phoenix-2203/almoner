@@ -8,3 +8,8 @@ import { AlmonerVault, explorerAccount, fmtUsdc, type Purchase, type SignedQuote
 import { collectAndReview, negotiate } from "./agent.js";
 import { loadState, NETWORK, RPC, SELLERS_URL } from "./config.js";
 
+const state = loadState();
+const vault = new AlmonerVault(state.vault.accountId, RPC);
+const agent = vault.agent(state.agent.key);
+let step = 0;
+
