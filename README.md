@@ -232,3 +232,6 @@ scripts/build.sh       Contract → wasm
 4. **Third-party delivery evaluators**, as an alternative to buyer review.
 5. **NEAR mainnet with native USDC.** Audit first.
 
+## License
+
+MIT
