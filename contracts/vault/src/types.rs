@@ -179,3 +179,19 @@ pub struct LogEntry {
     pub hash: String,
 }
 
+// ---------- JSON views ----------
+
+#[near(serializers = [json])]
+pub struct TaskView {
+    pub id: TaskId,
+    pub rules: TaskInput,
+    pub status: TaskStatus,
+    pub version: u32,
+    pub mandate_hash: String,
+    pub spent: U128,
+    pub reserved: U128,
+    pub remaining: U128,
+    pub created_ms: u64,
+    pub updated_ms: u64,
+}
+
