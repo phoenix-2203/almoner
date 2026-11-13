@@ -71,3 +71,65 @@ const readBody = (req: IncomingMessage) =>
     });
   });
 
+export function startSellers(port = Number(process.env.SELLERS_PORT ?? 8787)) {
+  const state = loadState();
+  const vault = new AlmonerVault(state.vault.accountId, RPC);
+
+  const server = createServer(async (req, res) => {
+    try {
+      const [, name, action] = (req.url ?? "").split("/");
+      const s = state.sellers[name];
+      const catalog = CATALOG[name];
+      if (!s || !catalog) return json(res, 404, { error: "unknown seller" });
+
+      if (req.method === "GET" && action === "catalog") return json(res, 200, catalog);
+
+      if (req.method === "POST" && action === "quote") {
+        const body = await readBody(req);
+        const entry = catalog.find((c) => c.item === body.item);
+        if (!entry) return json(res, 404, { error: "not in catalog" });
+        // Negotiation: accept an offer at or above the floor, otherwise counter at the floor.
+        let price = BigInt(entry.list);
+        let note = "list price";
+        if (body.offer) {
+          const offer = BigInt(body.offer);
+          if (offer >= BigInt(entry.floor)) {
+            price = offer < price ? offer : price;
+            note = "offer accepted";
+          } else {
+            price = BigInt(entry.floor);
+            note = "counter-offer at floor";
+          }
+        }
+        const quote: Quote = {
+          seller: s.accountId,
+          item: entry.item,
+          category: entry.category,
+          description: entry.description,
+          price: price.toString(),
+          expires_at_ms: Date.now() + 10 * 60_000,
+          nonce: newNonce(),
+        };
+        return json(res, 200, { ...signQuote(state.vault.accountId, quote, s.quoteKey), note });
+      }
+
+      if (req.method === "POST" && action === "fulfil") {
+        const body = await readBody(req);
+        const p = await vault.getPurchase(Number(body.purchase_id));
+        if (!p) return json(res, 404, { error: "no such purchase" });
+        if (p.seller !== s.accountId) return json(res, 403, { error: "not our purchase" });
+        if (p.status !== "Escrowed") return json(res, 409, { error: `purchase is ${p.status}, not Escrowed` });
+        const result = deliverable(name, p.item);
+        const result_hash = sha256hex(result);
+        await vault.seller(s.accountId, s.key).deliver(p.id, result_hash);
+        return json(res, 200, { result, result_hash });
+      }
+      return json(res, 404, { error: "not found" });
+    } catch (e: any) {
+      return json(res, 500, { error: String(e?.message ?? e) });
+    }
+  });
+  server.listen(port, () => console.log(`sellers listening on http://localhost:${port} (datadesk, junkdata)`));
+  return server;
+}
+
