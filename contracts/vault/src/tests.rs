@@ -126,3 +126,21 @@ struct World {
     hash: String,
 }
 
+fn setup() -> World {
+    as_owner(T0);
+    let mut v = Vault::new(owner(), token());
+    let t = v.create_task(rules());
+    let agent = agent_key(9);
+    let _ = v.add_agent(agent.clone(), "research-agent".into(), vec![t.id], None);
+    // Fund the vault: 10 tUSDC from the owner via ft_transfer_call.
+    as_account(&token(), T0, NearToken::from_yoctonear(0));
+    let _ = v.ft_on_transfer(owner(), U128(10 * USDC), String::new());
+    let honest = Seller::new("datadesk.testnet", 1);
+    let junk = Seller::new("junkdata.testnet", 2);
+    for s in [&honest, &junk] {
+        as_account(&s.account, T0, SELLER_REGISTRATION_DEPOSIT);
+        v.register_seller(s.account.to_string(), s.pk(), None);
+    }
+    World { v, agent, honest, junk, hash: t.mandate_hash }
+}
+
