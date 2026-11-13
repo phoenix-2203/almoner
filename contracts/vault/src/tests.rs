@@ -252,3 +252,13 @@ fn disguised_blocked_item_is_refused() {
     assert_eq!(w.v.get_vault().reserved.0, 0);
 }
 
+#[test]
+fn tampered_price_fails_signature() {
+    let mut w = setup();
+    let (mut q, sig) = w.honest.quote("https://datadesk/r", "report", "d", USDC / 10, "n1");
+    q.price = U128(USDC / 100); // agent (or injection) edits the quote
+    as_agent(&w.agent, T0 + 1_000);
+    let p = w.v.request_purchase(1, w.hash.clone(), q, sig, "x".into(), "k1".into());
+    assert_eq!(p.code, "QUOTE_INVALID");
+}
+
