@@ -144,3 +144,10 @@ fn setup() -> World {
     World { v, agent, honest, junk, hash: t.mandate_hash }
 }
 
+fn buy(w: &mut World, s: &str, item: &str, cat: &str, price: u128, nonce: &str, idem: &str) -> Purchase {
+    let seller = if s == "honest" { &w.honest } else { &w.junk };
+    let (q, sig) = seller.quote(item, cat, "Daily report", price, nonce);
+    as_agent(&w.agent, T0 + 1_000);
+    w.v.request_purchase(1, w.hash.clone(), q, sig, "for tonight's brief".into(), idem.into())
+}
+
