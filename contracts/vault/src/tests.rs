@@ -424,3 +424,17 @@ fn rate_limit_stops_a_looping_agent() {
     assert_eq!(&codes[4], "RATE_LIMITED");
 }
 
+#[test]
+fn frozen_vault_and_paused_task_refuse() {
+    let mut w = setup();
+    as_owner(T0);
+    w.v.set_task_status(1, TaskStatus::Paused);
+    let p = buy(&mut w, "honest", "https://datadesk/r", "report", USDC / 10, "n1", "k1");
+    assert_eq!(p.code, "TASK_NOT_ACTIVE");
+    as_owner(T0);
+    w.v.set_task_status(1, TaskStatus::Active);
+    w.v.set_frozen(true);
+    let p = buy(&mut w, "honest", "https://datadesk/r", "report", USDC / 10, "n2", "k2");
+    assert_eq!(p.code, "VAULT_FROZEN");
+}
+
