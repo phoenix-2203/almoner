@@ -86,3 +86,18 @@ pub struct Seller {
     pub stats: SellerStats,
 }
 
+#[near(serializers = [borsh, json])]
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct SellerStats {
+    /// Delivered and accepted by the buyer.
+    pub delivered_ok: u32,
+    /// Delivered, buyer stayed silent, payment released after the review window.
+    pub auto_released: u32,
+    /// Delivered, buyer rejected it: refunded.
+    pub rejected: u32,
+    /// Never delivered before the deadline: refunded.
+    pub missed: u32,
+    /// Total paid out to this seller, token base units.
+    pub earned: U128,
+}
+
