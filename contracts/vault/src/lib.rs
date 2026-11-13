@@ -256,4 +256,17 @@ impl Vault {
             AGENT_METHODS,
         )
     }
+
+    pub fn assign_agent(&mut self, public_key: PublicKey, task_ids: Vec<TaskId>) {
+        self.assert_owner();
+        for id in &task_ids {
+            require!(self.tasks.contains_key(id), "unknown task in task_ids");
+        }
+        let a = self
+            .agents
+            .get_mut(&String::from(&public_key))
+            .unwrap_or_else(|| env::panic_str("unknown agent"));
+        a.task_ids = task_ids;
+        self.append_log("agent_assigned", None, "OK");
+    }
 }
