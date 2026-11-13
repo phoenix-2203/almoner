@@ -170,3 +170,15 @@ export function signQuote(vault: string, q: Quote, quoteKey: KeyPairString): Sig
 
 export const newNonce = () => randomBytes(12).toString("hex");
 
+/** Mirror of the on-chain IntentLock normalizer, for pre-flight checks. */
+export function normalize(s: string): string {
+  const pct = (x: string) => x.replace(/%([0-9a-fA-F]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
+  const map: Record<string, string> = { "0": "o", "1": "i", "!": "i", "|": "i", "3": "e", "4": "a", "@": "a", "5": "s", $: "s", "7": "t", "8": "b" };
+  let out = "";
+  for (const ch of pct(pct(s)).toLowerCase()) {
+    if (map[ch]) out += map[ch];
+    else if (/[a-z0-9]/.test(ch)) out += ch;
+  }
+  return out;
+}
+
