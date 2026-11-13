@@ -43,3 +43,5 @@ async function hasCode(id: string) {
   return hash && hash !== "11111111111111111111111111111111";
 }
 
+const newKey = () => KeyPair.fromRandom("ed25519").toString() as KeyPairString;
+
