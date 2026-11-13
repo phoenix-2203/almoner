@@ -130,3 +130,28 @@ enum Decision {
     Escrow(String),
 }
 
+#[near]
+impl Vault {
+    #[init]
+    pub fn new(owner: AccountId, token: AccountId) -> Self {
+        let mut v = Self {
+            owner,
+            token,
+            frozen: false,
+            balance: 0,
+            reserved: 0,
+            next_task_id: 1,
+            tasks: IterableMap::new(StorageKey::Tasks),
+            agents: IterableMap::new(StorageKey::Agents),
+            sellers: IterableMap::new(StorageKey::Sellers),
+            purchases: Vector::new(StorageKey::Purchases),
+            idempotency: LookupMap::new(StorageKey::Idempotency),
+            memory: LookupMap::new(StorageKey::Memory),
+            quote_nonces: LookupMap::new(StorageKey::QuoteNonces),
+            log: Vector::new(StorageKey::Log),
+            log_head: "0".repeat(64),
+        };
+        v.append_log("vault_created", None, "OK");
+        v
+    }
+}
