@@ -263,4 +263,26 @@ export class AlmonerVault {
       withdraw: (amount: string) => call<boolean>("withdraw", { amount }, 100n * TGAS),
     };
   }
+
+  /** Client for a seller (their own account). */
+  seller(sellerId: string, sellerKey: KeyPairString) {
+    const acct = new Account(sellerId, this.rpcUrl, sellerKey);
+    return {
+      register: (name: string, quote_key: string, about: string) =>
+        acct.callFunction({
+          contractId: this.vaultId,
+          methodName: "register_seller",
+          args: { name, quote_key, about },
+          gas: 30n * TGAS,
+          deposit: 10_000_000_000_000_000_000_000n, // 0.01 NEAR
+        }),
+      deliver: (purchase_id: number, result_hash: string) =>
+        acct.callFunction<Purchase & object>({
+          contractId: this.vaultId,
+          methodName: "deliver",
+          args: { purchase_id, result_hash },
+          gas: 30n * TGAS,
+        }) as Promise<Purchase>,
+    };
+  }
 }
