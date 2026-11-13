@@ -70,3 +70,25 @@ enum StorageKey {
     Log,
 }
 
+#[near(contract_state)]
+#[derive(PanicOnDefault)]
+pub struct Vault {
+    owner: AccountId,
+    token: AccountId,
+    frozen: bool,
+    balance: u128,
+    reserved: u128,
+    next_task_id: TaskId,
+    tasks: IterableMap<TaskId, Task>,
+    agents: IterableMap<String, Agent>,
+    sellers: IterableMap<AccountId, Seller>,
+    purchases: Vector<Purchase>,
+    idempotency: LookupMap<String, PurchaseId>,
+    /// seller|item -> last paid purchase id (procurement memory).
+    memory: LookupMap<String, PurchaseId>,
+    /// seller|nonce -> used.
+    quote_nonces: LookupMap<String, bool>,
+    log: Vector<LogEntry>,
+    log_head: String,
+}
+
