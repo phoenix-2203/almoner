@@ -199,3 +199,13 @@ fn identical_item_is_reused_for_free() {
     assert_eq!(w.v.get_task(1).unwrap().spent.0, USDC / 10);
 }
 
+#[test]
+fn retry_with_same_idempotency_key_returns_original() {
+    let mut w = setup();
+    let a = buy(&mut w, "honest", "https://datadesk/r", "report", USDC / 10, "n1", "same");
+    let b = buy(&mut w, "honest", "https://datadesk/other", "report", USDC / 10, "n9", "same");
+    assert_eq!(a.id, b.id);
+    assert_eq!(w.v.get_vault().purchases, 1);
+    assert_eq!(w.v.get_vault().reserved.0, USDC / 10);
+}
+
