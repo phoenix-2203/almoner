@@ -58,3 +58,11 @@ test("preflight mirrors category and blocked-term rules", () => {
   assert.equal((preflight(rules, q("https://x/r", "report", "2000000")) as any).code, "OVER_PURCHASE_LIMIT");
 });
 
+test("delivery check rejects junk and hash mismatches", async () => {
+  const { sha256hex } = await import("../src/sdk.js");
+  const good = JSON.stringify({ rows: [1] });
+  assert.equal(checkDelivery(good, sha256hex(good)).ok, true);
+  assert.equal(checkDelivery("", sha256hex("")).ok, false);
+  assert.equal(checkDelivery('{"error":"upstream timeout"}', sha256hex('{"error":"upstream timeout"}')).ok, false);
+  assert.equal(checkDelivery(good, sha256hex("other")).ok, false);
+});
