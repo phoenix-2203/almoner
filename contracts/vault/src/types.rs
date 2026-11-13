@@ -138,3 +138,31 @@ pub enum PurchaseStatus {
     Refunded,
 }
 
+#[near(serializers = [borsh, json])]
+#[derive(Clone, Debug)]
+pub struct Purchase {
+    pub id: PurchaseId,
+    pub task_id: TaskId,
+    pub mandate_version: u32,
+    pub agent: String,
+    pub seller: AccountId,
+    pub item: String,
+    pub category: String,
+    pub description: String,
+    pub price: U128,
+    pub reason: String,
+    pub status: PurchaseStatus,
+    /// Machine-readable decision code, e.g. APPROVED_ESCROW, INTENT_MISMATCH.
+    pub code: String,
+    /// Plain-language explanation of the decision.
+    pub detail: String,
+    pub quote_nonce: String,
+    pub created_ms: u64,
+    pub deliver_by_ms: u64,
+    pub delivered_ms: u64,
+    pub result_hash: Option<String>,
+    pub review_by_ms: u64,
+    pub settled_ms: u64,
+    pub reused_from: Option<PurchaseId>,
+}
+
