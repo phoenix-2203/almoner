@@ -281,3 +281,18 @@ fn quote_for_another_vault_is_refused() {
     assert_eq!(p.code, "QUOTE_INVALID");
 }
 
+#[test]
+fn replayed_and_expired_quotes_are_refused() {
+    let mut w = setup();
+    let (q, sig) = w.honest.quote("https://datadesk/r", "report", "d", USDC / 10, "n1");
+    as_agent(&w.agent, T0 + 1_000);
+    let a = w.v.request_purchase(1, w.hash.clone(), q.clone(), sig.clone(), "x".into(), "k1".into());
+    assert_eq!(a.status, PurchaseStatus::Escrowed);
+    let b = w.v.request_purchase(1, w.hash.clone(), q, sig, "x".into(), "k2".into());
+    assert_eq!(b.code, "QUOTE_REPLAYED");
+
+    let (q, sig) = w.honest.quote_for(&vault(), "https://datadesk/r2", "report", "d", USDC / 10, "n3", T0 + 500);
+    let c = w.v.request_purchase(1, w.hash.clone(), q, sig, "x".into(), "k3".into());
+    assert_eq!(c.code, "QUOTE_EXPIRED");
+}
+
