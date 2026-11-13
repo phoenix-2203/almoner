@@ -988,4 +988,20 @@ impl Vault {
         let id = p.id;
         self.purchases.set(id, p);
     }
+
+    fn task_view(&self, id: TaskId) -> TaskView {
+        let t = self.task_or_panic(id);
+        TaskView {
+            id,
+            rules: t.rules.clone(),
+            status: t.status,
+            version: t.version,
+            mandate_hash: t.mandate_hash.clone(),
+            spent: U128(t.spent),
+            reserved: U128(t.reserved),
+            remaining: U128(t.rules.budget.0.saturating_sub(t.spent + t.reserved)),
+            created_ms: t.created_ms,
+            updated_ms: t.updated_ms,
+        }
+    }
 }
