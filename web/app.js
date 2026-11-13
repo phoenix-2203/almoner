@@ -11,4 +11,18 @@
   const explorer = cfg.network === "mainnet" ? "https://nearblocks.io" : "https://testnet.nearblocks.io";
   const tone = { Paid: "ok", Reused: "ok", Escrowed: "info", Delivered: "info", PayoutPending: "info", PendingApproval: "warn", Refunded: "warn", Rejected: "bad", Declined: "bad" };
   let filter = "All";
+
+  async function view(method, args = {}) {
+    const res = await fetch(cfg.rpc, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0", id: "almoner", method: "query",
+        params: { request_type: "call_function", finality: "optimistic", account_id: cfg.vault, method_name: method, args_base64: btoa(JSON.stringify(args)) },
+      }),
+    });
+    const j = await res.json();
+    if (j.error || j.result?.error) throw new Error(JSON.stringify(j.error || j.result.error));
+    return JSON.parse(new TextDecoder().decode(new Uint8Array(j.result.result)));
+  }
 })();
