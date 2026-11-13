@@ -4,6 +4,21 @@
 
 AI agents now buy data, APIs and compute by themselves, a few cents at a time. A spending cap answers "can the agent afford this?". It doesn't answer "is this what the agent was asked to buy, did we pay what was quoted, did we get what we paid for, and can we prove it?" Almoner answers those questions in a NEAR contract that the agent can't get around.
 
+## Live on NEAR testnet
+
+| | |
+| --- | --- |
+| Vault contract | [`vault.almoner-502c7b80.testnet`](https://testnet.nearblocks.io/address/vault.almoner-502c7b80.testnet) |
+| Token (tUSDC, test only) | [`tusdc.almoner-502c7b80.testnet`](https://testnet.nearblocks.io/address/tusdc.almoner-502c7b80.testnet) |
+| Dashboard | https://phoenix-2203.github.io/almoner/ (reads the vault straight from NEAR RPC) |
+| Public challenge | [CHALLENGE.md](CHALLENGE.md): **the agent's private key is published. Try to take the money.** |
+
+```bash
+git clone https://github.com/phoenix-2203/almoner && cd almoner/ts && npm ci && npm run attack
+```
+
+That command needs no account and no setup. It signs six attacks with the published agent key against the live vault and prints how each one was stopped: four by the NEAR protocol, two by the vault, which records them on-chain.
+
 ## Tracks
 
 | Track | Official ask (nearhackathon.com) | Where Almoner does it |
@@ -205,6 +220,8 @@ ts/src/sellers.ts      Two seller agents (honest, junk) that sign quotes and del
 ts/src/demo.ts         The night shift, live on testnet
 ts/src/bootstrap.ts    One-command testnet setup
 ts/src/owner.ts        Owner CLI
+ts/src/attack.ts       Public challenge: six attacks signed with the published agent key
+ts/src/challenge-setup.ts  Owner-only: open the public challenge
 web/                   Read-only dashboard (static, no build step)
 scripts/build.sh       Contract → wasm
 ```
