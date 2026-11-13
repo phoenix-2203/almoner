@@ -198,3 +198,11 @@ export const explorerTx = (network: string, hash: string) =>
 export const explorerAccount = (network: string, id: string) =>
   network === "mainnet" ? `https://nearblocks.io/address/${id}` : `https://testnet.nearblocks.io/address/${id}`;
 
+// ---------- client ----------
+
+export class AlmonerVault {
+  readonly provider: JsonRpcProvider;
+  constructor(readonly vaultId: string, readonly rpcUrl: string) {
+    this.provider = new JsonRpcProvider({ url: rpcUrl });
+  }
+}
