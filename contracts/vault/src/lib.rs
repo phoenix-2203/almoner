@@ -36,3 +36,11 @@ use near_sdk::{
     NearToken, PanicOnDefault, Promise, PromiseOrValue, PublicKey,
 };
 
+pub const ONE_YOCTO: NearToken = NearToken::from_yoctonear(1);
+pub const GAS_FT_TRANSFER: Gas = Gas::from_tgas(15);
+pub const GAS_CALLBACK: Gas = Gas::from_tgas(15);
+pub const SELLER_REGISTRATION_DEPOSIT: NearToken = NearToken::from_millinear(10);
+/// Default gas allowance for an agent key: 0.25 NEAR of gas.
+pub const DEFAULT_AGENT_ALLOWANCE: NearToken = NearToken::from_millinear(250);
+pub const AGENT_METHODS: &str = "request_purchase,confirm_delivery,settle_expired";
+
