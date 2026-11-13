@@ -205,3 +205,19 @@ pub struct AgentView {
     pub requests: u32,
 }
 
+#[near(serializers = [json])]
+pub struct SellerView {
+    pub account_id: AccountId,
+    pub name: String,
+    pub about: String,
+    pub quote_key: String,
+    pub on_hold: bool,
+    pub hold_reason: String,
+    pub registered_ms: u64,
+    pub stats: SellerStats,
+    /// Share of settled purchases that were delivered, in basis points (0..=10000).
+    /// Only escrow-settled purchases count, so it can't be inflated without paying.
+    pub delivery_score_bps: u32,
+    pub settled: u32,
+}
+
