@@ -72,3 +72,27 @@ export type PurchaseStatus =
   | "Paid"
   | "Refunded";
 
+export interface Purchase {
+  id: number;
+  task_id: number;
+  mandate_version: number;
+  agent: string;
+  seller: string;
+  item: string;
+  category: string;
+  description: string;
+  price: string;
+  reason: string;
+  status: PurchaseStatus;
+  code: string;
+  detail: string;
+  quote_nonce: string;
+  created_ms: number;
+  deliver_by_ms: number;
+  delivered_ms: number;
+  result_hash: string | null;
+  review_by_ms: number;
+  settled_ms: number;
+  reused_from: number | null;
+}
+
