@@ -141,4 +141,12 @@ mod tests {
         assert_eq!(t.ft_balance_of(accounts(2)).0, 2_000_000);
         assert_eq!(t.ft_total_supply().0, 5_000_000);
     }
+
+    #[test]
+    #[should_panic(expected = "faucet: 1..=1000 tUSDC per call")]
+    fn faucet_is_capped() {
+        testing_env!(VMContextBuilder::new().predecessor_account_id(accounts(1)).build());
+        let mut t = TestUsdc::new();
+        t.faucet(None, U128(FAUCET_MAX + 1));
+    }
 }
