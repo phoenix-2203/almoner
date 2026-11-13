@@ -102,3 +102,7 @@ async function main() {
   console.log(`   explorer: ${explorerAccount(NETWORK, state.vault.accountId)}`);
 }
 
+main().catch((e) => {
+  console.error("\n" + (e?.message ?? e));
+  process.exit(1);
+});
