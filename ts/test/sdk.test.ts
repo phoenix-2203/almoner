@@ -49,3 +49,12 @@ test("signed quote fixture is stable and verifiable", async () => {
   assert.equal(readFileSync(FIXTURE, "utf8"), text, "fixture drifted: re-run with WRITE_FIXTURE=1 and re-run cargo test");
 });
 
+test("preflight mirrors category and blocked-term rules", () => {
+  const rules: any = { categories: ["report"], blocked_terms: ["gift card"], max_per_purchase: "1000000" };
+  const q = (item: string, category = "report", price = "1"): Quote => ({ seller: "s", item, category, description: "", price, expires_at_ms: 0, nonce: "n" });
+  assert.deepEqual(preflight(rules, q("https://x/report")), { ok: true });
+  assert.equal((preflight(rules, q("https://x/G1FT-c@rd")) as any).code, "INTENT_MISMATCH");
+  assert.equal((preflight(rules, q("https://x/vpn", "software")) as any).code, "INTENT_MISMATCH");
+  assert.equal((preflight(rules, q("https://x/r", "report", "2000000")) as any).code, "OVER_PURCHASE_LIMIT");
+});
+
