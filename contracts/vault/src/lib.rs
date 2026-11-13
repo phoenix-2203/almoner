@@ -595,4 +595,17 @@ impl Vault {
             _ => env::panic_str("nothing to settle for this purchase"),
         }
     }
+
+    // ------------------------------------------------------------------
+    // Token receiver + callbacks
+    // ------------------------------------------------------------------
+
+    /// NEP-141 receiver: deposits of the vault's token fund the vault.
+    pub fn ft_on_transfer(&mut self, sender_id: AccountId, amount: U128, msg: String) -> PromiseOrValue<U128> {
+        require!(env::predecessor_account_id() == self.token, "only the vault's token can be deposited");
+        let _ = (sender_id, msg);
+        self.balance += amount.0;
+        self.append_log("deposit", None, "DEPOSIT");
+        PromiseOrValue::Value(U128(0))
+    }
 }
