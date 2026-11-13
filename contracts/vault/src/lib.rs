@@ -644,4 +644,14 @@ impl Vault {
         self.emit_purchase(&p);
         p
     }
+
+    #[private]
+    pub fn on_withdraw(&mut self, amount: U128) -> bool {
+        let ok = env::promise_result_checked(0, 64).is_ok();
+        if !ok {
+            self.balance += amount.0;
+            self.append_log("withdraw_failed", None, "WITHDRAW_FAILED");
+        }
+        ok
+    }
 }
