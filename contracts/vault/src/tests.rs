@@ -209,3 +209,15 @@ fn retry_with_same_idempotency_key_returns_original() {
     assert_eq!(w.v.get_vault().reserved.0, USDC / 10);
 }
 
+#[test]
+fn above_approval_line_waits_then_owner_approves() {
+    let mut w = setup();
+    let p = buy(&mut w, "honest", "https://datadesk/premium", "report", USDC / 2, "n1", "k1");
+    assert_eq!(p.status, PurchaseStatus::PendingApproval);
+    assert_eq!(w.v.get_vault().reserved.0, 0, "budget untouched while held");
+    as_owner(T0 + 5_000);
+    let a = w.v.approve_purchase(p.id);
+    assert_eq!(a.status, PurchaseStatus::Escrowed);
+    assert_eq!(w.v.get_vault().reserved.0, USDC / 2);
+}
+
