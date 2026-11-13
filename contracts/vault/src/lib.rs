@@ -979,4 +979,8 @@ impl Vault {
     fn task_or_panic(&self, id: TaskId) -> &Task {
         self.tasks.get(&id).unwrap_or_else(|| env::panic_str("unknown task"))
     }
+
+    fn purchase_or_panic(&self, id: PurchaseId) -> &Purchase {
+        self.purchases.get(id).unwrap_or_else(|| env::panic_str("unknown purchase"))
+    }
 }
