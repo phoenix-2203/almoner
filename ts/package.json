@@ -11,6 +11,7 @@
     "owner": "tsx --env-file-if-exists=.env src/owner.ts",
     "challenge:setup": "tsx --env-file-if-exists=.env src/challenge-setup.ts",
     "attack": "tsx src/attack.ts",
+    "build:web": "esbuild src/web-bundle.ts --bundle --format=iife --global-name=NearApi --platform=browser --target=es2020 --minify --legal-comments=none --alias:util=./src/web-util-shim.cjs --outfile=../web/vendor/near.js",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test test/*.test.ts"
   },
@@ -21,6 +22,7 @@
   "devDependencies": {
     "@noble/curves": "^2.4.0",
     "@types/node": "^26.6.6",
+    "esbuild": "^0.28.2",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"
   }
