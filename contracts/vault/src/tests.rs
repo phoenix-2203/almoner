@@ -308,3 +308,20 @@ fn unknown_or_unlisted_seller_is_refused() {
     assert_eq!(p.code, "SELLER_NOT_ALLOWED");
 }
 
+#[test]
+fn limits_and_budget() {
+    let mut w = setup();
+    let p = buy(&mut w, "honest", "https://datadesk/big", "report", 3 * USDC, "n1", "k1");
+    assert_eq!(p.code, "OVER_PURCHASE_LIMIT");
+    // Spend the budget with held purchases approved by the owner.
+    let mut n = 10;
+    for _ in 0..2 {
+        let p = buy(&mut w, "honest", &format!("https://datadesk/x{}", n), "report", 2 * USDC, &format!("n{}", n), &format!("k{}", n));
+        as_owner(T0 + 2_000);
+        w.v.approve_purchase(p.id);
+        n += 1;
+    }
+    let p = buy(&mut w, "honest", "https://datadesk/last", "report", 2 * USDC, "n99", "k99");
+    assert_eq!(p.code, "OVER_BUDGET");
+}
+
