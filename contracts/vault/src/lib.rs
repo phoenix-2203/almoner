@@ -1029,4 +1029,21 @@ impl Vault {
         let pid = purchase_id.map(|p| p.to_string()).unwrap_or_else(|| "-".into());
         sha256_hex(format!("{}|{}|{}|{}|{}|{}", seq, at_ms, kind, pid, code, prev).as_bytes())
     }
+
+    fn append_log(&mut self, kind: &str, purchase_id: Option<PurchaseId>, code: &str) {
+        let seq = self.log.len();
+        let at_ms = env::block_timestamp_ms();
+        let prev = self.log_head.clone();
+        let hash = Self::log_hash(seq, at_ms, kind, purchase_id, code, &prev);
+        self.log.push(LogEntry {
+            seq,
+            at_ms,
+            kind: kind.into(),
+            purchase_id,
+            code: code.into(),
+            prev_hash: prev,
+            hash: hash.clone(),
+        });
+        self.log_head = hash;
+    }
 }
