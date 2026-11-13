@@ -12,3 +12,21 @@ import { Account, JsonRpcProvider, KeyPair, type KeyPairString } from "near-api-
 export const TGAS = 1_000_000_000_000n;
 export const USDC_DECIMALS = 6;
 
+// ---------- contract types (mirror contracts/vault/src/types.rs) ----------
+
+export interface TaskInput {
+  name: string;
+  purpose: string;
+  categories: string[];
+  blocked_terms: string[];
+  allowed_sellers: string[];
+  budget: string;
+  max_per_purchase: string;
+  approval_above: string;
+  max_purchases_per_hour: number;
+  reuse_window_ms: number;
+  delivery_window_ms: number;
+  review_window_ms: number;
+  expires_at_ms: number;
+}
+
