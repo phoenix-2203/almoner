@@ -115,3 +115,26 @@ pub struct Quote {
     pub nonce: String,
 }
 
+#[near(serializers = [borsh, json])]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PurchaseStatus {
+    /// Refused before any money moved. See `code`.
+    Declined,
+    /// Identical item already bought within the reuse window: served for $0.
+    Reused,
+    /// Above the approval line: waiting for the owner. Budget untouched.
+    PendingApproval,
+    /// Owner rejected a held purchase.
+    Rejected,
+    /// Funds reserved in the vault; waiting for the seller to deliver.
+    Escrowed,
+    /// Seller says delivered; waiting for the buyer's review.
+    Delivered,
+    /// Payment to the seller is in flight.
+    PayoutPending,
+    /// Seller paid.
+    Paid,
+    /// Reservation released back to the task: nothing was paid.
+    Refunded,
+}
+
