@@ -55,3 +55,9 @@ export interface Quote {
   nonce: string;
 }
 
+export interface SignedQuote {
+  quote: Quote;
+  /** base64 ed25519 signature over quoteMessage(vault, quote) */
+  signature: string;
+}
+
