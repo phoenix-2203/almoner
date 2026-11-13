@@ -355,4 +355,12 @@ impl Vault {
         s.hold_reason = String::new();
         self.append_log("seller_cleared", None, "HOLD_CLEARED");
     }
+
+    pub fn hold_seller(&mut self, seller: AccountId, reason: String) {
+        self.assert_owner();
+        let s = self.sellers.get_mut(&seller).unwrap_or_else(|| env::panic_str("unknown seller"));
+        s.on_hold = true;
+        s.hold_reason = truncate(&reason, MAX_TEXT);
+        self.append_log("seller_held", None, "HOLD_BY_OWNER");
+    }
 }
