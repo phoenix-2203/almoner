@@ -194,3 +194,18 @@ npm run owner -- lock-vault --yes   # optional: delete the vault's full-access k
 - **Before `lock-vault`, whoever holds the vault's full-access key can upgrade the contract.**
 - **Testnet only, not audited.** The tUSDC token has an open faucet by design.
 
+## Repository layout
+
+```
+contracts/vault        Rust (near-sdk 5.30): the Almoner Vault + 31 unit tests
+contracts/test-token   Rust: tUSDC, a testnet NEP-141 token with a faucet
+ts/src/sdk.ts          TypeScript client: views, agent/owner/seller calls, quote signing, IntentLock mirror
+ts/src/agent.ts        Buyer agent: negotiation inside the mandate, delivery checks
+ts/src/sellers.ts      Two seller agents (honest, junk) that sign quotes and deliver
+ts/src/demo.ts         The night shift, live on testnet
+ts/src/bootstrap.ts    One-command testnet setup
+ts/src/owner.ts        Owner CLI
+web/                   Read-only dashboard (static, no build step)
+scripts/build.sh       Contract → wasm
+```
+
