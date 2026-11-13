@@ -688,4 +688,18 @@ impl Vault {
     pub fn get_mandate_json(&self, task_id: TaskId) -> Option<String> {
         self.tasks.get(&task_id).map(|t| near_sdk::serde_json::to_string(&t.rules).unwrap_or_default())
     }
+
+    pub fn get_agents(&self) -> Vec<AgentView> {
+        self.agents
+            .values()
+            .map(|a| AgentView {
+                name: a.name.clone(),
+                public_key: a.public_key.clone(),
+                task_ids: a.task_ids.clone(),
+                active: a.active,
+                added_ms: a.added_ms,
+                requests: a.requests,
+            })
+            .collect()
+    }
 }
