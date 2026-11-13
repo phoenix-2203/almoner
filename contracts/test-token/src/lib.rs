@@ -18,3 +18,9 @@ use near_sdk::{env, near, require, AccountId, BorshStorageKey, PanicOnDefault, P
 /// 1,000 tUSDC with 6 decimals.
 pub const FAUCET_MAX: u128 = 1_000 * 1_000_000;
 
+#[derive(BorshStorageKey)]
+#[near]
+enum StorageKey {
+    Token,
+}
+
