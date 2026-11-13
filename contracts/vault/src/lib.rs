@@ -683,4 +683,9 @@ impl Vault {
     pub fn get_tasks(&self) -> Vec<TaskView> {
         self.tasks.keys().map(|id| self.task_view(*id)).collect()
     }
+
+    /// The exact JSON the mandate hash is computed over.
+    pub fn get_mandate_json(&self, task_id: TaskId) -> Option<String> {
+        self.tasks.get(&task_id).map(|t| near_sdk::serde_json::to_string(&t.rules).unwrap_or_default())
+    }
 }
