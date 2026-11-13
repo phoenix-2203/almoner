@@ -3,18 +3,78 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Almoner Vault</title>
+<title>Almoner: agents can ask, never take</title>
+<meta name="description" content="A NEAR vault for AI agents. The agent's key can only ask to buy; rules a person signed decide; junk deliveries are refunded.">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header>
-  <div class="brand"><span class="logo">◆</span> Almoner <small>on NEAR</small></div>
-  <form id="pick"><input id="vaultInput" placeholder="vault.yourname.testnet" spellcheck="false"><button>Load</button></form>
+<header class="top">
+  <a class="brand" href="#top"><span class="logo">◆</span> Almoner <small>on NEAR</small></a>
+  <nav>
+    <a href="#how">How it works</a>
+    <a href="#break">Break it</a>
+    <a href="#live">Live vault</a>
+    <a href="https://github.com/phoenix-2203/almoner" target="_blank" rel="noopener">GitHub</a>
+  </nav>
+  <a class="btn primary small" href="#break">Take the key</a>
 </header>
-<main>
-  <p class="lede">Every agent purchase, accounted for. Rules a person signed, enforced by a NEAR contract: agents hold keys that can only ask; sellers sign every price; money waits in escrow until delivery is checked.</p>
-  <div id="challenge"></div>
-  <section id="vault" class="cards"></section>
+
+<main id="top">
+  <section class="hero">
+    <div class="pitch">
+      <span class="eyebrow"><i class="dot"></i> Live on NEAR testnet · built at NEAR HACKATHON</span>
+      <h1>Agents can ask.<br>They can never take.</h1>
+      <p class="sub">Almoner is a vault for AI agents on NEAR. The agent holds a key that can only <em>ask</em> to buy. Rules a person signed decide. Money waits in escrow until delivery is checked, and junk gets refunded.</p>
+      <div class="actions">
+        <a class="btn primary" href="#break">Here's the agent's key. Try to take the money</a>
+        <a class="btn" href="#live">Watch the live vault</a>
+      </div>
+    </div>
+    <aside class="ledger" aria-label="Latest decisions from the live vault">
+      <div class="ledger-head"><span><i class="dot"></i> Latest decisions, read from chain</span><span class="mono muted" id="heroVault"></span></div>
+      <ol id="feed"><li class="muted">Reading the vault…</li></ol>
+    </aside>
+  </section>
+
+  <section class="stats" id="stats" aria-label="Live numbers from the vault"></section>
+
+  <section id="how">
+    <h2>How it works</h2>
+    <div class="steps">
+      <div class="step"><b>1</b><h3>A person signs the rules</h3><p>Purpose, allowed categories, blocked terms, sellers, budget, per-purchase cap and an approval line. One task, one mandate.</p></div>
+      <div class="step"><b>2</b><h3>The vault issues the agent's key</h3><p>A NEAR function-call key on the vault's own account. It can call three methods. It can't transfer, add keys or call anything else.</p></div>
+      <div class="step"><b>3</b><h3>Sellers sign every price</h3><p>The agent forwards a signed quote. The vault checks the signature on-chain, so nobody can edit the price, the item or the payee.</p></div>
+      <div class="step"><b>4</b><h3>Escrow, then proof</h3><p>Funds wait until the seller delivers. Accepted work is paid. Junk or silence is refunded and the seller goes on hold.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>What makes it different</h2>
+    <div class="steps three">
+      <div class="step"><h3>Leak the key, lose nothing</h3><p>On most agent wallets a leaked key is a drained wallet. Here the protocol itself limits the key, so we publish it.</p></div>
+      <div class="step"><h3>Within budget isn't enough</h3><p>IntentLock refuses purchases that fit the budget but not the purpose, even when the item is disguised: <span class="mono">G1FT-c@rd</span> is still a gift card.</p></div>
+      <div class="step"><h3>Reputation you can't fake</h3><p>A seller's score counts only purchases settled through escrow. Faking it costs real payments.</p></div>
+    </div>
+  </section>
+
+  <section id="break" class="break">
+    <div>
+      <h2>Break it</h2>
+      <p>The private key of this vault's agent is published in the repository on purpose. One command signs six theft attempts with it and shows how each is stopped: four by the NEAR protocol, two by the vault, which records them on-chain.</p>
+      <div id="challenge"></div>
+    </div>
+    <pre class="term"><code>git clone https://github.com/phoenix-2203/almoner
+cd almoner/ts && npm ci
+npm run attack</code></pre>
+  </section>
+
+  <section id="live">
+    <div class="live-head">
+      <h2>Live vault</h2>
+      <form id="pick"><input id="vaultInput" placeholder="vault.yourname.testnet" spellcheck="false" aria-label="Vault account"><button>Load</button></form>
+    </div>
+    <div id="vault" class="cards"></div>
+  </section>
   <section>
     <h2>Task mandates</h2>
     <div id="tasks"></div>
@@ -34,7 +94,7 @@
     <div class="tablewrap"><table id="log"><thead><tr><th>Seq</th><th>When</th><th>Event</th><th>Code</th><th>Hash</th></tr></thead><tbody></tbody></table></div>
   </section>
 </main>
-<footer>Read-only. Reads the vault straight from NEAR RPC; no backend. <span id="updated"></span></footer>
+<footer>Testnet only; tUSDC is a test token with no value. This page reads the vault straight from NEAR RPC, with no backend. <span id="updated"></span></footer>
 <script src="config.js"></script>
 <script src="app.js"></script>
 </body>
