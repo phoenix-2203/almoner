@@ -5,15 +5,29 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Almoner: agents can ask, never take</title>
 <meta name="description" content="A NEAR vault for AI agents. The agent's key can only ask to buy; rules a person signed decide; junk deliveries are refunded.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Almoner: agents can ask, never take">
+<meta property="og:description" content="A NEAR vault for AI agents. We published the agent's private key. Try to take the money.">
+<meta property="og:url" content="https://phoenix-2203.github.io/almoner/">
+<meta property="og:image" content="https://phoenix-2203.github.io/almoner/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Almoner: agents can ask, never take">
+<meta name="twitter:description" content="A NEAR vault for AI agents. We published the agent's private key. Try to take the money.">
+<meta name="twitter:image" content="https://phoenix-2203.github.io/almoner/og.png">
+<meta name="theme-color" content="#1c6b45">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231c6b45'/%3E%3Cpath d='M16 6l10 10-10 10L6 16z' fill='%23f7f6f1'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<a class="skip" href="#top">Skip to content</a>
 <header class="top">
   <a class="brand" href="#top"><span class="logo">◆</span> Almoner <small>on NEAR</small></a>
   <nav>
     <a href="#how">How it works</a>
+    <a href="#compare">Compare</a>
     <a href="#break">Break it</a>
     <a href="#live">Live vault</a>
+    <a href="#faq">FAQ</a>
     <a href="https://github.com/phoenix-2203/almoner" target="_blank" rel="noopener">GitHub</a>
   </nav>
   <a class="btn primary small" href="#break">Take the key</a>
@@ -48,13 +62,30 @@
     </div>
   </section>
 
-  <section>
-    <h2>What makes it different</h2>
-    <div class="steps three">
-      <div class="step"><h3>Leak the key, lose nothing</h3><p>On most agent wallets a leaked key is a drained wallet. Here the protocol itself limits the key, so we publish it.</p></div>
-      <div class="step"><h3>Within budget isn't enough</h3><p>IntentLock refuses purchases that fit the budget but not the purpose, even when the item is disguised: <span class="mono">G1FT-c@rd</span> is still a gift card.</p></div>
-      <div class="step"><h3>Reputation you can't fake</h3><p>A seller's score counts only purchases settled through escrow. Faking it costs real payments.</p></div>
+  <section aria-label="Who can do what">
+    <div class="flow" role="img" aria-label="The owner signs rules into the vault. The agent can only ask the vault. The vault holds money in escrow and pays the seller only after delivery is checked; otherwise it refunds.">
+      <div class="node"><span class="who">Owner</span><span class="can">signs the rules, approves big purchases</span></div>
+      <div class="arrow"><span>rules</span></div>
+      <div class="node vaultnode"><span class="who">Almoner vault</span><span class="can">NEAR contract · holds the money · checks every request</span>
+        <div class="asks"><span class="who">Agent</span><span class="can">its key can only <b>ask</b></span></div></div>
+      <div class="arrow"><span>escrow → pay or refund</span></div>
+      <div class="node"><span class="who">Seller agent</span><span class="can">signs each price, earns only on delivery</span></div>
     </div>
+  </section>
+
+  <section id="compare">
+    <h2>A spending limit isn't enough</h2>
+    <div class="tablewrap"><table class="compare">
+      <thead><tr><th>What goes wrong</th><th>Agent wallet with a spending cap</th><th>Almoner</th></tr></thead>
+      <tbody>
+        <tr><td>The agent's key leaks</td><td class="no">Wallet can be drained up to the cap, or entirely</td><td class="yes">Nothing moves. The key can only ask, so we publish it</td></tr>
+        <tr><td>A hijacked agent buys something off-purpose, within budget</td><td class="no">Goes through: a cap only asks "can it afford this?"</td><td class="yes">Refused: IntentLock checks what is bought against the signed purpose</td></tr>
+        <tr><td>Someone edits the price or the payee</td><td class="no">Agent pays whatever it was told</td><td class="yes">Refused: the seller's signature no longer matches</td></tr>
+        <tr><td>The seller delivers junk, or nothing</td><td class="no">Money is gone</td><td class="yes">Refunded from escrow; the seller goes on hold</td></tr>
+        <tr><td>The agent retries or loops</td><td class="no">Pays twice</td><td class="yes">Same request returns the same decision; hourly limit stops loops</td></tr>
+        <tr><td>You ask "what happened last night?"</td><td class="no">Scattered logs that can be edited</td><td class="yes">Every decision, refusals included, on-chain and hash-chained</td></tr>
+      </tbody>
+    </table></div>
   </section>
 
   <section id="break" class="break">
@@ -63,9 +94,28 @@
       <p>The private key of this vault's agent is published in the repository on purpose. One command signs six theft attempts with it and shows how each is stopped: four by the NEAR protocol, two by the vault, which records them on-chain.</p>
       <div id="challenge"></div>
     </div>
-    <pre class="term"><code>git clone https://github.com/phoenix-2203/almoner
+    <div class="termwrap">
+      <div class="termbar"><span>Terminal</span><button type="button" id="copy" class="copy">Copy</button></div>
+      <pre class="term"><code id="cmd">git clone https://github.com/phoenix-2203/almoner
 cd almoner/ts && npm ci
 npm run attack</code></pre>
+      <pre class="term out" aria-label="Recorded output of npm run attack against the live vault"><code><span class="c"># recorded output, 13 Nov 2026</span>
+1. Transfer NEAR out of the vault account
+   <span class="g">blocked by the NEAR protocol</span> · Access key requires full access
+2. Add our own full-access key to the vault account
+   <span class="g">blocked by the NEAR protocol</span> · Access key requires full access
+3. Call ft_transfer on the token contract directly
+   <span class="g">blocked by the NEAR protocol</span> · Deposit is not allowed with function call
+4. Call the vault's owner-only withdraw
+   <span class="g">blocked by the NEAR protocol</span> · Access key does not allow method withdraw
+5. Pay a quote we signed in the seller's name
+   <span class="g">refused by the vault</span> · QUOTE_INVALID
+6. Pay a 'seller' account we control
+   <span class="g">refused by the vault</span> · SELLER_UNKNOWN
+
+Vault token balance: 19.85 tUSDC before, 19.85 tUSDC after.
+<span class="g">Nothing moved.</span></code></pre>
+    </div>
   </section>
 
   <section id="live">
@@ -93,9 +143,22 @@ npm run attack</code></pre>
     <div id="logcheck"></div>
     <div class="tablewrap"><table id="log"><thead><tr><th>Seq</th><th>When</th><th>Event</th><th>Code</th><th>Hash</th></tr></thead><tbody></tbody></table></div>
   </section>
+  <section id="faq">
+    <h2>Questions a careful reader asks</h2>
+    <details><summary>Isn't this just a spending limit?</summary><p>No. A limit answers "can the agent afford this?". Almoner also answers "is this what it was asked to buy, at the price the seller signed, and did the work arrive?". Purchases inside the budget are still refused when they don't serve the task.</p></details>
+    <details><summary>What can the published key actually do?</summary><p>Three things: ask the vault to buy, accept or reject a delivery for its own task, and settle a purchase whose time window has passed. It can also burn its own gas allowance of 1 NEAR, after which it stops working. It can't transfer funds, add keys or call any other contract. NEAR enforces that, not our code.</p></details>
+    <details><summary>Why does this need NEAR?</summary><p>NEAR accounts can hold several keys with different powers, and a contract can add and delete keys on its own account. That lets the vault hand an agent a key that is limited by the protocol itself. Seller signatures are checked with a built-in host function, and payments use the NEP-141 token standard.</p></details>
+    <details><summary>What doesn't it protect against?</summary><p>IntentLock is rule-based: it checks categories and blocked terms, not meaning. A seller can mislabel an item, at the risk of rejection, a refund and a hold. Delivery quality is judged by the buyer. The owner is trusted to set sensible rules. The full list is in the README.</p></details>
+    <details><summary>Is it ready for real money?</summary><p>No. It runs on NEAR testnet with a test token, and the contract hasn't been audited. It was built in a few days for NEAR HACKATHON, with 31 contract tests and the public challenge above.</p></details>
+  </section>
 </main>
 <footer>Testnet only; tUSDC is a test token with no value. This page reads the vault straight from NEAR RPC, with no backend. <span id="updated"></span></footer>
 <script src="config.js"></script>
 <script src="app.js"></script>
+<script>
+  document.getElementById("copy").onclick = async (e) => {
+    try { await navigator.clipboard.writeText(document.getElementById("cmd").textContent); e.target.textContent = "Copied"; setTimeout(() => (e.target.textContent = "Copy"), 1500); } catch {}
+  };
+</script>
 </body>
 </html>
