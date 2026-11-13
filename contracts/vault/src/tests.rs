@@ -221,3 +221,16 @@ fn above_approval_line_waits_then_owner_approves() {
     assert_eq!(w.v.get_vault().reserved.0, USDC / 2);
 }
 
+#[test]
+fn approval_cannot_override_a_tightened_limit() {
+    let mut w = setup();
+    let p = buy(&mut w, "honest", "https://datadesk/premium", "report", USDC / 2, "n1", "k1");
+    as_owner(T0 + 5_000);
+    let mut r = rules();
+    r.max_per_purchase = U128(USDC / 5);
+    w.v.update_task(1, r);
+    let a = w.v.approve_purchase(p.id);
+    assert_eq!(a.status, PurchaseStatus::Rejected);
+    assert_eq!(a.code, "OVER_PURCHASE_LIMIT");
+}
+
