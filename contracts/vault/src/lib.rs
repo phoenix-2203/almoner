@@ -96,3 +96,13 @@ fn sha256_hex(data: &[u8]) -> String {
     hex(&env::sha256_array(data))
 }
 
+fn hex(bytes: &[u8]) -> String {
+    const CHARS: &[u8; 16] = b"0123456789abcdef";
+    let mut s = String::with_capacity(bytes.len() * 2);
+    for b in bytes {
+        s.push(CHARS[(b >> 4) as usize] as char);
+        s.push(CHARS[(b & 0xf) as usize] as char);
+    }
+    s
+}
+
