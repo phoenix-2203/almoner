@@ -1,0 +1,10 @@
+{
+  "network": "testnet",
+  "rpc": "https://rpc.testnet.fastnear.com",
+  "vault": "vault.almoner-502c7b80.testnet",
+  "token": "tusdc.almoner-502c7b80.testnet",
+  "taskId": 2,
+  "seller": "datadesk.almoner-502c7b80.testnet",
+  "agentPublicKey": "ed25519:57kkewe2vdA2Gn5CYtkERkiQUBuC6VvdEivbY731VMBy",
+  "agentPrivateKey": "ed25519:2h3E1vYHvJMMG3BvQcMjUiGdBgvAPRo28F4CSfAv58e1R1ZK8me12XT2j1VdD1jGvLiyfqSEiLvv99dSC5CSn3WT"
+}
