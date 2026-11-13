@@ -975,4 +975,8 @@ impl Vault {
         );
         require!(r.expires_at_ms > env::block_timestamp_ms(), "expires_at_ms must be in the future");
     }
+
+    fn task_or_panic(&self, id: TaskId) -> &Task {
+        self.tasks.get(&id).unwrap_or_else(|| env::panic_str("unknown task"))
+    }
 }
