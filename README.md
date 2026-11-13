@@ -48,3 +48,13 @@ sequenceDiagram
 | `ed25519_verify` host function | Seller quotes are verified on-chain. | Price, item, category and payee can't be edited between the seller and the vault. |
 | NEP-297 events | Every decision emits `EVENT_JSON` (`standard: "almoner"`). | Indexers and explorers can follow the night. |
 
+## What's new compared with existing tools
+
+| Existing tool | What it does | What Almoner adds |
+| --- | --- | --- |
+| Agent wallets with caps on NEAR (Agent API policies, OutLayer) | Limits how much an agent spends | **IntentLock**: refuses within-budget purchases that are off-purpose (wrong category or a disguised blocked term). Caps are tied to a task, not just a wallet. |
+| OutLayer | Signs payloads inside a TEE. Its docs say caps are "best-effort under concurrency" and some messages are signed "without parsing" | Limits are exact contract state, updated atomically. The vault builds and checks every payout itself. |
+| Pay-per-call agent payments on NEAR today (`@x402/near`, `exact` scheme only) | Pay first, then hope the result arrives | **Escrow with refunds**: rejected or missed deliveries go back to the task. A silent buyer can't stiff an honest seller, because payment auto-releases after the review window. |
+| Star ratings and registries | Reputation anyone can inflate | **Reputation counts only escrow-settled purchases**, so faking it costs real payments. |
+| Off-chain agent logs | Logs that can be edited | Every decision, refusals included, is stored on-chain and hash-chained. Your browser recomputes the chain on the dashboard. |
+
