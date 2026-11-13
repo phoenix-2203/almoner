@@ -456,3 +456,12 @@ fn revoked_agent_is_locked_out() {
     buy(&mut w, "honest", "https://datadesk/r", "report", USDC / 10, "n1", "k1");
 }
 
+#[test]
+#[should_panic(expected = "this key isn't a registered agent")]
+fn unregistered_key_on_vault_is_refused() {
+    let mut w = setup();
+    let (q, sig) = w.honest.quote("https://datadesk/r", "report", "d", USDC / 10, "n1");
+    as_agent(&agent_key(42), T0);
+    w.v.request_purchase(1, w.hash.clone(), q, sig, "x".into(), "k".into());
+}
+
