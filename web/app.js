@@ -25,4 +25,9 @@
     if (j.error || j.result?.error) throw new Error(JSON.stringify(j.error || j.result.error));
     return JSON.parse(new TextDecoder().decode(new Uint8Array(j.result.result)));
   }
+
+  async function sha256hex(text) {
+    const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+    return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, "0")).join("");
+  }
 })();
