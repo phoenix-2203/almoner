@@ -898,4 +898,30 @@ impl Vault {
         self.emit_purchase(&p);
         PromiseOrValue::Value(p)
     }
+
+    fn start_payout(&mut self, mut p: Purchase, code: &str, detail: &str) -> Promise {
+        let price = p.price.0;
+        // Optimistic accounting; on_payout undoes it if the transfer fails.
+        let task = self.tasks.get_mut(&p.task_id).unwrap_or_else(|| env::abort());
+        task.reserved -= price;
+        task.spent += price;
+        self.reserved -= price;
+        self.balance -= price;
+        p.status = PurchaseStatus::PayoutPending;
+        p.code = "PAYOUT_PENDING".into();
+        p.detail = detail.to_string();
+        let id = p.id;
+        let seller = p.seller.clone();
+        self.store_purchase(p);
+        self.append_log("payout_started", Some(id), "PAYOUT_PENDING");
+        ext_ft::ext(self.token.clone())
+            .with_attached_deposit(ONE_YOCTO)
+            .with_static_gas(GAS_FT_TRANSFER)
+            .ft_transfer(seller, U128(price), Some(format!("almoner purchase #{}", id)))
+            .then(
+                Self::ext(env::current_account_id())
+                    .with_static_gas(GAS_CALLBACK)
+                    .on_payout(id, code.to_string()),
+            )
+    }
 }
