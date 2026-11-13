@@ -30,3 +30,5 @@ export interface TaskInput {
   expires_at_ms: number;
 }
 
+export type TaskStatus = "Active" | "Paused" | "Closed";
+
