@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Try Almoner: attack the live vault</title>
+<meta name="description" content="A NEAR vault for AI agents. The agent's key can only ask to buy; rules a person signed decide; junk deliveries are refunded.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Almoner: agents can ask, never take">
+<meta property="og:description" content="A NEAR vault for AI agents. We published the agent's private key. Try to take the money.">
+<meta property="og:url" content="https://phoenix-2203.github.io/almoner/">
+<meta property="og:image" content="https://phoenix-2203.github.io/almoner/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Almoner: agents can ask, never take">
+<meta name="twitter:description" content="A NEAR vault for AI agents. We published the agent's private key. Try to take the money.">
+<meta name="twitter:image" content="https://phoenix-2203.github.io/almoner/og.png">
+<meta name="theme-color" content="#090c0b">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23090c0b'/%3E%3Cpath d='M16 6l10 10-10 10L6 16z' fill='%2319f5a5'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script>
+  // Theme: saved choice first, then the system setting. Runs before paint to avoid a flash.
+  (function () { var t = null; try { t = localStorage.getItem("almoner-theme"); } catch (e) {} if (!t) t = matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark"; document.documentElement.dataset.theme = t; })();
+</script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#top">Skip to content</a>
+<header class="top">
+  <a class="brand" href="index.html"><span class="logo">◆</span> Almoner <small>on NEAR</small></a>
+  <nav>
+    <a href="#attack">Attack console</a>
+    <a href="#custom">Your own call</a>
+    <a href="#live">Live vault</a>
+    <a href="index.html">About</a>
+    <a href="https://github.com/phoenix-2203/almoner" target="_blank" rel="noopener">GitHub</a>
+  </nav>
+  <button type="button" id="theme" class="themebtn" aria-label="Switch between light and dark" title="Light / dark"><span class="sun">☀</span><span class="moon">☾</span></button>
+  <a class="btn small" href="index.html"><span aria-hidden="true">←</span> Home</a>
+</header>
+<div class="backdrop" aria-hidden="true"></div>
+
+<main id="top">
+  <section class="tryhead">
+    <span class="eyebrow"><i class="dot"></i> Live on NEAR testnet · real transactions</span>
+    <h1 class="h1s">You hold the agent's key.<br>Take the <mark>money</mark>.</h1>
+    <p class="sub">This page has the vault agent's real private key loaded. Every button signs a real transaction in your browser and sends it to NEAR. Nothing here is simulated.</p>
+  </section>
+
+  <section class="keycard" id="keycard" aria-live="polite">
+    <div class="kv"><span class="k">Vault</span><span class="v mono" id="kVault">…</span></div>
+    <div class="kv"><span class="k">Vault holds</span><span class="v" id="kHolds">…</span></div>
+    <div class="kv wide"><span class="k">Agent private key (published on purpose)</span><span class="v mono" id="kKey">loading…</span></div>
+    <div class="kv"><span class="k">Gas left on this key</span><span class="v" id="kGas">…</span></div>
+  </section>
+  <p class="fine" id="keynote"></p>
+
+  <section id="attack">
+    <p class="kicker">Attack console</p>
+    <div class="live-head"><h2>Six ways to try to take it</h2><button type="button" class="btn primary small" id="runAll">Run all six</button></div>
+    <div class="attacks" id="attacks"></div>
+    <p class="fine">Attempts 1 to 4 are thrown out by the NEAR protocol before they reach the contract. Attempts 5 and 6 reach the vault, are refused, and appear under "Every decision" below within a few seconds. Each of those two spends a little of the key's gas.</p>
+  </section>
+
+  <section id="custom">
+    <p class="kicker">Think you can do better?</p>
+    <h2>Send your own call with the key</h2>
+    <form id="customForm" class="custom">
+      <label>Contract<input id="cContract" spellcheck="false"></label>
+      <label>Method<input id="cMethod" value="withdraw" spellcheck="false"></label>
+      <label class="grow">Arguments (JSON)<input id="cArgs" value='{"amount":"1000000"}' spellcheck="false"></label>
+      <label class="check"><input type="checkbox" id="cYocto"> attach 1 yoctoNEAR</label>
+      <button class="btn primary small">Sign and send</button>
+    </form>
+    <pre class="term result" id="cOut" aria-live="polite">The signer is the vault account itself, using the agent key above. Try any contract, any method.</pre>
+  </section>
+
+  <section id="live">
+    <p class="kicker">The public record</p>
+    <div class="live-head">
+      <h2>Live vault</h2>
+      <form id="pick"><input id="vaultInput" placeholder="vault.yourname.testnet" spellcheck="false" aria-label="Vault account"><button>Load</button></form>
+    </div>
+    <div id="vault" class="cards"></div>
+  </section>
+  <section>
+    <h2>Task mandates</h2>
+    <div id="tasks"></div>
+  </section>
+  <section>
+    <h2>Every decision <span class="muted" id="pcount"></span></h2>
+    <div class="filters" id="filters"></div>
+    <div class="tablewrap"><table id="purchases"><thead><tr><th>#</th><th>When</th><th>Decision</th><th>Seller</th><th>Item</th><th class="num">Price</th><th>Why</th></tr></thead><tbody></tbody></table></div>
+  </section>
+  <section>
+    <h2>Seller reputation <span class="muted">earned only from escrow-settled purchases</span></h2>
+    <div id="sellers" class="cards"></div>
+  </section>
+  <section>
+    <h2>Tamper-evident log</h2>
+    <div id="logcheck"></div>
+    <div class="tablewrap"><table id="log"><thead><tr><th>Seq</th><th>When</th><th>Event</th><th>Code</th><th>Hash</th></tr></thead><tbody></tbody></table></div>
+  </section>
+</main>
+<footer>Testnet only; tUSDC is a test token with no value. This page reads the vault straight from NEAR RPC, with no backend. <span id="updated"></span></footer>
+<script src="config.js"></script>
+<script src="app.js"></script>
+<script src="vendor/near.js"></script>
+<script src="try.js"></script>
+<script>
+  document.getElementById("theme").onclick = () => {
+    const next = document.documentElement.dataset.theme === "light" ? "dark" : "light";
+    document.documentElement.dataset.theme = next;
+    try { localStorage.setItem("almoner-theme", next); } catch (e) {}
+  };
+</script>
+</body>
+</html>
