@@ -1,0 +1,18 @@
+[package]
+name = "almoner-vault"
+version = "0.1.0"
+edition = "2021"
+description = "Almoner Vault: per-task mandates, contract-issued agent keys, signed quotes, escrow and refunds on NEAR"
+license = "MIT"
+repository = "https://github.com/phoenix-2203/almoner-near"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+near-sdk = "5"
+
+[dev-dependencies]
+near-sdk = { version = "5", features = ["unit-testing"] }
+ed25519-dalek = { version = "2", features = ["rand_core"] }
+rand = "0.8"
