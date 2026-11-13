@@ -262,3 +262,13 @@ fn tampered_price_fails_signature() {
     assert_eq!(p.code, "QUOTE_INVALID");
 }
 
+#[test]
+fn redirected_payee_fails_signature() {
+    let mut w = setup();
+    let (mut q, sig) = w.honest.quote("https://datadesk/r", "report", "d", USDC / 10, "n1");
+    q.seller = w.junk.account.clone(); // swap the payee, keep the signature
+    as_agent(&w.agent, T0 + 1_000);
+    let p = w.v.request_purchase(1, w.hash.clone(), q, sig, "x".into(), "k1".into());
+    assert_eq!(p.code, "QUOTE_INVALID");
+}
+
