@@ -347,3 +347,16 @@ fn junk_delivery_rejected_refunds_and_holds_seller() {
     assert_eq!(again.code, "SELLER_ON_HOLD");
 }
 
+#[test]
+fn missed_delivery_refunds_after_window() {
+    let mut w = setup();
+    let p = buy(&mut w, "junk", "https://junkdata/r", "report", USDC / 10, "n1", "k1");
+    as_agent(&w.agent, p.deliver_by_ms + 1);
+    let r = w.v.settle_expired(p.id);
+    match r {
+        PromiseOrValue::Value(p) => assert_eq!(p.code, "REFUND_NOT_DELIVERED"),
+        _ => panic!("expected refund"),
+    }
+    assert_eq!(w.v.get_seller(w.junk.account.clone()).unwrap().stats.missed, 1);
+}
+
