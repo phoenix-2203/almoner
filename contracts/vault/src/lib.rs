@@ -207,4 +207,14 @@ impl Vault {
         self.append_log("task_signed", None, &code);
         self.task_view(task_id)
     }
+
+    pub fn set_task_status(&mut self, task_id: TaskId, status: TaskStatus) {
+        self.assert_owner();
+        let task = self.tasks.get_mut(&task_id).unwrap_or_else(|| env::panic_str("unknown task"));
+        require!(task.status != TaskStatus::Closed, "task is closed");
+        task.status = status;
+        task.updated_ms = env::block_timestamp_ms();
+        let code = format!("TASK_{}_{:?}", task_id, status).to_uppercase();
+        self.append_log("task_status", None, &code);
+    }
 }
