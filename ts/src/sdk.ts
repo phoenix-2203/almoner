@@ -32,3 +32,16 @@ export interface TaskInput {
 
 export type TaskStatus = "Active" | "Paused" | "Closed";
 
+export interface TaskView {
+  id: number;
+  rules: TaskInput;
+  status: TaskStatus;
+  version: number;
+  mandate_hash: string;
+  spent: string;
+  reserved: string;
+  remaining: string;
+  created_ms: number;
+  updated_ms: number;
+}
+
