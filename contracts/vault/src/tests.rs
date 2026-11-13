@@ -100,3 +100,21 @@ fn as_callback(now: u64, ok: bool) {
     );
 }
 
+fn rules() -> TaskInput {
+    TaskInput {
+        name: "Tonight's market brief".into(),
+        purpose: "Buy market data and reports for tonight's AI-agents market brief.".into(),
+        categories: vec!["market-data".into(), "report".into()],
+        blocked_terms: vec!["gift card".into(), "crypto transfer".into()],
+        allowed_sellers: vec![acc("datadesk.testnet"), acc("junkdata.testnet")],
+        budget: U128(5 * USDC),
+        max_per_purchase: U128(2 * USDC),
+        approval_above: U128(USDC / 4),
+        max_purchases_per_hour: 20,
+        reuse_window_ms: 3_600_000,
+        delivery_window_ms: 300_000,
+        review_window_ms: 300_000,
+        expires_at_ms: T0 + 86_400_000,
+    }
+}
+
