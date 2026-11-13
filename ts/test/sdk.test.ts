@@ -14,3 +14,11 @@ const FIXTURE = join(ROOT, "contracts", "vault", "src", "fixtures", "ts_quote.js
 // Deterministic key (testnet fixture only): 32 bytes of 0x01 as seed.
 const seed = new Uint8Array(32).fill(1);
 
+test("normalize matches the contract's IntentLock", () => {
+  assert.equal(normalize("G1FT-c@rd"), "giftcard");
+  assert.equal(normalize("g i f t   c a r d"), "giftcard");
+  assert.equal(normalize("gift%20card"), "giftcard");
+  assert.equal(normalize("gift%2520card"), "giftcard");
+  assert.equal(normalize("Pr3m1um $tock data"), "premiumstockdata");
+});
+
