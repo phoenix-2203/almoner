@@ -82,3 +82,26 @@ impl FungibleTokenCore for TestUsdc {
     }
 }
 
+#[near]
+impl FungibleTokenResolver for TestUsdc {
+    #[private]
+    fn ft_resolve_transfer(
+        &mut self,
+        sender_id: AccountId,
+        receiver_id: AccountId,
+        amount: U128,
+    ) -> U128 {
+        let (used, burned) =
+            self.token.internal_ft_resolve_transfer(&sender_id, receiver_id, amount);
+        if burned > 0 {
+            FtBurn {
+                owner_id: &sender_id,
+                amount: U128(burned),
+                memo: Some("refund of unregistered receiver"),
+            }
+            .emit();
+        }
+        used.into()
+    }
+}
+
