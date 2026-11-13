@@ -363,4 +363,11 @@ impl Vault {
         s.hold_reason = truncate(&reason, MAX_TEXT);
         self.append_log("seller_held", None, "HOLD_BY_OWNER");
     }
+
+    /// Emergency stop: no new purchases are approved while frozen.
+    pub fn set_frozen(&mut self, frozen: bool) {
+        self.assert_owner();
+        self.frozen = frozen;
+        self.append_log("vault_frozen", None, if frozen { "FROZEN" } else { "UNFROZEN" });
+    }
 }
