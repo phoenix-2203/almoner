@@ -154,4 +154,33 @@ impl Vault {
         v.append_log("vault_created", None, "OK");
         v
     }
+
+    // ------------------------------------------------------------------
+    // Owner
+    // ------------------------------------------------------------------
+
+    pub fn create_task(&mut self, rules: TaskInput) -> TaskView {
+        self.assert_owner();
+        Self::validate_rules(&rules);
+        let id = self.next_task_id;
+        self.next_task_id += 1;
+        let now = env::block_timestamp_ms();
+        let task = Task {
+            id,
+            mandate_hash: mandate_hash(&rules),
+            rules,
+            status: TaskStatus::Active,
+            version: 1,
+            spent: 0,
+            reserved: 0,
+            created_ms: now,
+            updated_ms: now,
+        };
+        self.emit("task_signed", near_sdk::serde_json::json!({
+            "task_id": id, "version": 1, "mandate_hash": task.mandate_hash
+        }));
+        self.tasks.insert(id, task);
+        self.append_log("task_signed", None, &format!("TASK_{}_V1", id));
+        self.task_view(id)
+    }
 }
