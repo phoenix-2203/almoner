@@ -117,3 +117,8 @@ fn truncate(s: &str, max: usize) -> String {
     s[..end].to_string()
 }
 
+pub fn mandate_hash(rules: &TaskInput) -> String {
+    let json = near_sdk::serde_json::to_string(rules).unwrap_or_else(|_| env::abort());
+    sha256_hex(json.as_bytes())
+}
+
