@@ -1,0 +1,25 @@
+{
+  "name": "almoner-near-ts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Almoner on NEAR: agent SDK, demo sellers, night-shift demo and owner CLI",
+  "scripts": {
+    "bootstrap": "tsx --env-file-if-exists=.env src/bootstrap.ts",
+    "sellers": "tsx --env-file-if-exists=.env src/sellers.ts",
+    "demo": "tsx --env-file-if-exists=.env src/demo.ts",
+    "owner": "tsx --env-file-if-exists=.env src/owner.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test test/*.test.ts"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "near-api-js": "^7.5.3"
+  },
+  "devDependencies": {
+    "@noble/curves": "^2.4.0",
+    "@types/node": "^26.6.6",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  }
+}
