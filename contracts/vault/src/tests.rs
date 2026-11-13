@@ -24,3 +24,8 @@ fn token() -> AccountId {
     acc("tusdc.testnet")
 }
 
+struct Seller {
+    account: AccountId,
+    key: SigningKey,
+}
+
