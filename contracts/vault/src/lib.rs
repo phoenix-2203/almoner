@@ -341,4 +341,10 @@ impl Vault {
         self.emit_purchase(&p);
         p
     }
+
+    /// Owner can review a delivered purchase too (e.g. when the agent is offline).
+    pub fn owner_review(&mut self, purchase_id: PurchaseId, accept: bool, note: Option<String>) -> PromiseOrValue<Purchase> {
+        self.assert_owner();
+        self.internal_review(purchase_id, accept, note, "owner")
+    }
 }
