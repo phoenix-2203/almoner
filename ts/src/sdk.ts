@@ -109,3 +109,18 @@ export interface SellerView {
   settled: number;
 }
 
+export interface VaultView {
+  owner: string;
+  token: string;
+  frozen: boolean;
+  balance: string;
+  reserved: string;
+  available: string;
+  tasks: number;
+  agents: number;
+  sellers: number;
+  purchases: number;
+  log_len: number;
+  log_head: string;
+}
+
