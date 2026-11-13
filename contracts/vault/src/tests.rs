@@ -513,3 +513,22 @@ fn mandate_hash_matches_published_json() {
     assert_eq!(sha256_hex(json.as_bytes()), w.hash);
 }
 
+#[test]
+fn ts_signed_quote_verifies_on_chain() {
+    // Produced by ts/test/sdk.test.ts with the same seed as the `honest` seller.
+    #[derive(near_sdk::serde::Deserialize)]
+    #[serde(crate = "near_sdk::serde")]
+    struct Fixture {
+        vault: String,
+        seller_public_key: String,
+        quote: Quote,
+        signature: Base64VecU8,
+    }
+    let f: Fixture = near_sdk::serde_json::from_str(include_str!("fixtures/ts_quote.json")).unwrap();
+    assert_eq!(f.vault, vault().to_string());
+    let mut w = setup();
+    assert_eq!(String::from(&w.honest.pk()), f.seller_public_key);
+    as_agent(&w.agent, T0 + 1_000);
+    let p = w.v.request_purchase(1, w.hash.clone(), f.quote, f.signature, "ts".into(), "ts".into());
+    assert_eq!(p.status, PurchaseStatus::Escrowed, "{}: {}", p.code, p.detail);
+}
