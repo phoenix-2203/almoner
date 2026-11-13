@@ -924,4 +924,10 @@ impl Vault {
                     .on_payout(id, code.to_string()),
             )
     }
+
+    fn reserve(&mut self, task_id: TaskId, amount: u128) {
+        let t = self.tasks.get_mut(&task_id).unwrap_or_else(|| env::abort());
+        t.reserved += amount;
+        self.reserved += amount;
+    }
 }
