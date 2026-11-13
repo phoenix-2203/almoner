@@ -751,4 +751,123 @@ impl Vault {
         let dh = sha256_hex(quote.description.as_bytes());
         intent::quote_message(env::current_account_id().as_str(), &quote, &dh)
     }
+
+    // ------------------------------------------------------------------
+    // Internals
+    // ------------------------------------------------------------------
+
+    fn decide(
+        &self,
+        agent_pk: &str,
+        task_id: TaskId,
+        mandate_hash: &str,
+        quote: &Quote,
+        signature: &Base64VecU8,
+        now: u64,
+    ) -> Decision {
+        use Decision::*;
+        if self.frozen {
+            return Decline("VAULT_FROZEN", "The owner froze the vault; nothing can be bought.".into());
+        }
+        let agent = match self.agents.get(agent_pk) {
+            Some(a) => a,
+            None => return Decline("AGENT_UNKNOWN", "This key isn't a registered agent.".into()),
+        };
+        let task = match self.tasks.get(&task_id) {
+            Some(t) => t,
+            None => return Decline("TASK_UNKNOWN", format!("There is no task #{}.", task_id)),
+        };
+        if !agent.task_ids.contains(&task_id) {
+            return Decline("AGENT_NOT_ASSIGNED", format!("Agent '{}' isn't assigned to task #{}.", agent.name, task_id));
+        }
+        if task.status != TaskStatus::Active {
+            return Decline("TASK_NOT_ACTIVE", format!("Task #{} is {:?}.", task_id, task.status));
+        }
+        if now > task.rules.expires_at_ms {
+            return Decline("TASK_EXPIRED", format!("Task #{} has expired.", task_id));
+        }
+        if mandate_hash != task.mandate_hash {
+            return Decline(
+                "MANDATE_CHANGED",
+                format!("The task's signed rules are now version {}; re-read the mandate before buying.", task.version),
+            );
+        }
+        let window_count = if now.saturating_sub(agent.window_start_ms) >= HOUR_MS { 0 } else { agent.window_count };
+        if window_count >= task.rules.max_purchases_per_hour {
+            return Decline(
+                "RATE_LIMITED",
+                format!("Agent hit {} requests this hour (loop protection).", task.rules.max_purchases_per_hour),
+            );
+        }
+        // Quote: seller, signature, binding, expiry, replay.
+        let seller = match self.sellers.get(&quote.seller) {
+            Some(s) => s,
+            None => return Decline("SELLER_UNKNOWN", format!("{} isn't a registered seller.", quote.seller)),
+        };
+        let sig: [u8; 64] = match signature.0.as_slice().try_into() {
+            Ok(s) => s,
+            Err(_) => return Decline("QUOTE_INVALID", "Signature must be 64 bytes.".into()),
+        };
+        let msg = intent::quote_message(
+            env::current_account_id().as_str(),
+            quote,
+            &sha256_hex(quote.description.as_bytes()),
+        );
+        if !env::ed25519_verify(&sig, msg.as_bytes(), &seller.quote_key) {
+            return Decline(
+                "QUOTE_INVALID",
+                "The quote's signature doesn't match the seller's key (price, item or payee was changed, or the quote is for another vault).".into(),
+            );
+        }
+        if now > quote.expires_at_ms {
+            return Decline("QUOTE_EXPIRED", "The seller's quote has expired.".into());
+        }
+        if self.quote_nonces.get(&format!("{}|{}", quote.seller, quote.nonce)).is_some() {
+            return Decline("QUOTE_REPLAYED", "This signed quote was already used.".into());
+        }
+        if !task.rules.allowed_sellers.is_empty() && !task.rules.allowed_sellers.contains(&quote.seller) {
+            return Decline("SELLER_NOT_ALLOWED", format!("{} isn't on task #{}'s seller list.", quote.seller, task_id));
+        }
+        if seller.on_hold {
+            return Decline("SELLER_ON_HOLD", format!("{} is on hold: {}.", quote.seller, seller.hold_reason));
+        }
+        // IntentLock.
+        if !intent::category_allowed(&task.rules, &quote.category) {
+            return Decline(
+                "INTENT_MISMATCH",
+                format!("Category '{}' doesn't serve this task's signed purpose (allowed: {}).", quote.category, task.rules.categories.join(", ")),
+            );
+        }
+        if let Some(term) = intent::find_blocked(&task.rules, quote) {
+            return Decline("INTENT_MISMATCH", format!("The item matches blocked term '{}' (disguises are decoded first).", term));
+        }
+        // Procurement memory: identical item already paid for recently.
+        if task.rules.reuse_window_ms > 0 {
+            if let Some(prev_id) = self.memory.get(&format!("{}|{}", quote.seller, quote.item)) {
+                if let Some(prev) = self.purchases.get(*prev_id) {
+                    if prev.status == PurchaseStatus::Paid && now.saturating_sub(prev.settled_ms) <= task.rules.reuse_window_ms {
+                        return Reuse(*prev_id, format!("Identical item bought in purchase #{}; served for $0.", prev_id));
+                    }
+                }
+            }
+        }
+        // Limits and money.
+        let price = quote.price.0;
+        if price == 0 {
+            return Decline("QUOTE_INVALID", "Price must be above zero.".into());
+        }
+        if price > task.rules.max_per_purchase.0 {
+            return Decline("OVER_PURCHASE_LIMIT", "Quoted price is above the task's per-purchase limit.".into());
+        }
+        if task.spent + task.reserved + price > task.rules.budget.0 {
+            return Decline("OVER_BUDGET", "Not enough budget left on this task.".into());
+        }
+        if self.available() < price {
+            return Decline("INSUFFICIENT_FUNDS", "The vault doesn't hold enough free funds.".into());
+        }
+        if price > task.rules.approval_above.0 {
+            return Hold("Above the approval line: waiting for the owner. Budget untouched.".into());
+        }
+        Escrow("Within every rule; funds held in escrow until the seller delivers.".into())
+    }
 }
