@@ -983,4 +983,9 @@ impl Vault {
     fn purchase_or_panic(&self, id: PurchaseId) -> &Purchase {
         self.purchases.get(id).unwrap_or_else(|| env::panic_str("unknown purchase"))
     }
+
+    fn store_purchase(&mut self, p: Purchase) {
+        let id = p.id;
+        self.purchases.set(id, p);
+    }
 }
