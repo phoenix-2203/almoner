@@ -61,3 +61,14 @@ export interface SignedQuote {
   signature: string;
 }
 
+export type PurchaseStatus =
+  | "Declined"
+  | "Reused"
+  | "PendingApproval"
+  | "Rejected"
+  | "Escrowed"
+  | "Delivered"
+  | "PayoutPending"
+  | "Paid"
+  | "Refunded";
+
