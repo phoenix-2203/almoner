@@ -438,3 +438,12 @@ fn frozen_vault_and_paused_task_refuse() {
     assert_eq!(p.code, "VAULT_FROZEN");
 }
 
+#[test]
+#[should_panic(expected = "agent methods must be called with a vault-issued agent key")]
+fn outside_account_cannot_call_agent_methods() {
+    let mut w = setup();
+    let (q, sig) = w.honest.quote("https://datadesk/r", "report", "d", USDC / 10, "n1");
+    testing_env!(ctx(acc("attacker.testnet"), Some(w.agent.clone()), T0).build());
+    w.v.request_purchase(1, w.hash.clone(), q, sig, "x".into(), "k".into());
+}
+
