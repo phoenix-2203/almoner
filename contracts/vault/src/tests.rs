@@ -131,7 +131,7 @@ fn setup() -> World {
     let mut v = Vault::new(owner(), token());
     let t = v.create_task(rules());
     let agent = agent_key(9);
-    let _ = v.add_agent(agent.clone(), "research-agent".into(), vec![t.id], None);
+    let _ = v.add_agent(agent.clone(), "research-agent".into(), vec![t.id], None, None);
     // Fund the vault: 10 tUSDC from the owner via ft_transfer_call.
     as_account(&token(), T0, NearToken::from_yoctonear(0));
     let _ = v.ft_on_transfer(owner(), U128(10 * USDC), String::new());
@@ -531,4 +531,202 @@ fn ts_signed_quote_verifies_on_chain() {
     as_agent(&w.agent, T0 + 1_000);
     let p = w.v.request_purchase(1, w.hash.clone(), f.quote, f.signature, "ts".into(), "ts".into());
     assert_eq!(p.status, PurchaseStatus::Escrowed, "{}: {}", p.code, p.detail);
+}
+
+// ---------------------------------------------------------------------------
+// Sub-mandates: agents hiring agents
+// ---------------------------------------------------------------------------
+
+fn buy_as(w: &mut World, who: &PublicKey, price: u128, nonce: &str, now: u64) -> Purchase {
+    let (q, sig) = w.honest.quote(&format!("https://datadesk/item-{}", nonce), "report", "Daily report", price, nonce);
+    as_agent(who, now);
+    w.v.request_purchase(1, w.hash.clone(), q, sig, "sub-task".into(), nonce.into())
+}
+
+fn pay(w: &mut World, who: &PublicKey, id: PurchaseId, now: u64) {
+    as_account(&w.honest.account.clone(), now, NearToken::from_yoctonear(0));
+    w.v.deliver(id, "sha256:abc".into());
+    as_agent(who, now + 1);
+    let _ = w.v.confirm_delivery(id, true, None);
+    as_callback(now + 2, true);
+    w.v.on_payout(id, "PAID_ACCEPTED".into());
+}
+
+/// Lead (owner-issued) -> Scout (0.30) -> Runner (0.20).
+fn team(w: &mut World) -> (PublicKey, PublicKey) {
+    let (scout, runner) = (agent_key(21), agent_key(22));
+    as_agent(&w.agent.clone(), T0 + 100);
+    let _ = w.v.delegate(scout.clone(), "scout".into(), 1, U128(3 * USDC / 10), Some(U128(USDC / 5)), None);
+    as_agent(&scout, T0 + 200);
+    let _ = w.v.delegate(runner.clone(), "runner".into(), 1, U128(USDC / 5), None, Some(T0 + 3_600_000));
+    (scout, runner)
+}
+
+#[test]
+fn sub_agent_buys_and_every_budget_above_is_charged() {
+    let mut w = setup();
+    let (scout, runner) = team(&mut w);
+    let p = buy_as(&mut w, &runner, USDC / 10, "r1", T0 + 1_000);
+    assert_eq!(p.status, PurchaseStatus::Escrowed, "{}", p.detail);
+    let subs = w.v.get_sub_mandates();
+    assert_eq!(subs.len(), 2);
+    assert!(subs.iter().all(|s| s.mandate.reserved.0 == USDC / 10), "both links reserve the price");
+    assert_eq!(w.v.get_task(1).unwrap().reserved.0, USDC / 10, "and so does the task");
+
+    pay(&mut w, &runner, p.id, T0 + 2_000);
+    let subs = w.v.get_sub_mandates();
+    assert!(subs.iter().all(|s| s.mandate.spent.0 == USDC / 10 && s.mandate.reserved.0 == 0));
+    let scout_view = subs.iter().find(|s| s.mandate.name == "scout").unwrap();
+    assert_eq!(scout_view.remaining.0, USDC / 5);
+    assert_eq!(scout_view.mandate.depth, 1);
+    assert_eq!(w.v.get_task(1).unwrap().spent.0, USDC / 10);
+    let _ = scout;
+    assert!(w.v.verify_log());
+}
+
+#[test]
+fn child_spending_counts_against_the_parent_sub_mandate() {
+    let mut w = setup();
+    let (scout, runner) = team(&mut w);
+    // Runner spends 0.20 of Scout's 0.30.
+    let a = buy_as(&mut w, &runner, USDC / 5, "r1", T0 + 1_000);
+    assert_eq!(a.status, PurchaseStatus::Escrowed, "{}", a.detail);
+    // Scout now has 0.10 left: 0.15 is refused, though it is inside Scout's own per-purchase limit.
+    let b = buy_as(&mut w, &scout, 15 * USDC / 100, "s1", T0 + 2_000);
+    assert_eq!(b.code, "SUB_MANDATE_BUDGET", "{}", b.detail);
+    // Runner's own budget is used up.
+    let c = buy_as(&mut w, &runner, USDC / 100, "r2", T0 + 3_000);
+    assert_eq!(c.code, "SUB_MANDATE_BUDGET", "{}", c.detail);
+    // Scout can still spend what is left.
+    let d = buy_as(&mut w, &scout, USDC / 10, "s2", T0 + 4_000);
+    assert_eq!(d.status, PurchaseStatus::Escrowed, "{}", d.detail);
+}
+
+#[test]
+fn sub_mandate_per_purchase_limit_applies() {
+    let mut w = setup();
+    let (scout, _) = team(&mut w);
+    let p = buy_as(&mut w, &scout, 21 * USDC / 100, "s1", T0 + 1_000);
+    assert_eq!(p.code, "SUB_MANDATE_LIMIT", "{}", p.detail);
+}
+
+#[test]
+fn refund_returns_budget_to_every_link() {
+    let mut w = setup();
+    let (_, runner) = team(&mut w);
+    let p = buy_as(&mut w, &runner, USDC / 10, "r1", T0 + 1_000);
+    as_account(&w.honest.account.clone(), T0 + 2_000, NearToken::from_yoctonear(0));
+    w.v.deliver(p.id, "sha256:junk".into());
+    as_agent(&runner, T0 + 3_000);
+    let _ = w.v.confirm_delivery(p.id, false, Some("empty".into()));
+    assert!(w.v.get_sub_mandates().iter().all(|s| s.mandate.reserved.0 == 0 && s.mandate.spent.0 == 0));
+    assert_eq!(w.v.get_task(1).unwrap().reserved.0, 0);
+}
+
+#[test]
+fn failed_payout_restores_sub_mandates() {
+    let mut w = setup();
+    let (_, runner) = team(&mut w);
+    let p = buy_as(&mut w, &runner, USDC / 10, "r1", T0 + 1_000);
+    as_account(&w.honest.account.clone(), T0 + 2_000, NearToken::from_yoctonear(0));
+    w.v.deliver(p.id, "sha256:abc".into());
+    as_agent(&runner, T0 + 3_000);
+    let _ = w.v.confirm_delivery(p.id, true, None);
+    as_callback(T0 + 4_000, false);
+    w.v.on_payout(p.id, "PAID_ACCEPTED".into());
+    assert!(w.v.get_sub_mandates().iter().all(|s| s.mandate.reserved.0 == USDC / 10 && s.mandate.spent.0 == 0));
+}
+
+#[test]
+fn revoking_one_link_stops_everything_below_it() {
+    let mut w = setup();
+    let (scout, runner) = team(&mut w);
+    as_agent(&w.agent.clone(), T0 + 500);
+    let _ = w.v.revoke_delegate(scout.clone());
+    let p = buy_as(&mut w, &runner, USDC / 10, "r1", T0 + 1_000);
+    assert_eq!(p.code, "SUB_MANDATE_REVOKED", "{}", p.detail);
+    assert!(w.v.get_sub_mandates().iter().all(|s| !s.usable));
+    // The lead itself is unaffected.
+    let lead = w.agent.clone();
+    let q = buy_as(&mut w, &lead, USDC / 10, "l1", T0 + 2_000);
+    assert_eq!(q.status, PurchaseStatus::Escrowed, "{}", q.detail);
+}
+
+#[test]
+fn owner_revoking_the_lead_stops_its_sub_agents() {
+    let mut w = setup();
+    let (scout, _) = team(&mut w);
+    as_owner(T0 + 500);
+    let _ = w.v.revoke_agent(w.agent.clone());
+    let p = buy_as(&mut w, &scout, USDC / 10, "s1", T0 + 1_000);
+    assert_eq!(p.code, "SUB_MANDATE_REVOKED", "{}", p.detail);
+}
+
+#[test]
+fn expired_sub_mandate_is_refused() {
+    let mut w = setup();
+    let (_, runner) = team(&mut w);
+    // Runner's sub-mandate ends an hour in; the quote must still be fresh, so sign one that is.
+    let (q, sig) = w.honest.quote_for(&vault(), "https://datadesk/late", "report", "Daily report", USDC / 10, "late", T0 + 4_000_000);
+    as_agent(&runner, T0 + 3_700_000);
+    let p = w.v.request_purchase(1, w.hash.clone(), q, sig, "late".into(), "late".into());
+    assert_eq!(p.code, "SUB_MANDATE_EXPIRED", "{}", p.detail);
+}
+
+#[test]
+fn sub_agent_still_obeys_the_task_the_owner_signed() {
+    let mut w = setup();
+    let (scout, _) = team(&mut w);
+    let (q, sig) = w.honest.quote("https://datadesk/G1FT-c@rd-10", "report", "Bonus", USDC / 10, "g1");
+    as_agent(&scout, T0 + 1_000);
+    let p = w.v.request_purchase(1, w.hash.clone(), q, sig, "bonus".into(), "g1".into());
+    assert_eq!(p.code, "INTENT_MISMATCH", "{}", p.detail);
+}
+
+#[test]
+#[should_panic(expected = "can only narrow: budget")]
+fn sub_mandate_cannot_widen_the_budget() {
+    let mut w = setup();
+    let (scout, _) = team(&mut w);
+    as_agent(&scout, T0 + 300);
+    let _ = w.v.delegate(agent_key(30), "greedy".into(), 1, U128(USDC), None, None);
+}
+
+#[test]
+#[should_panic(expected = "must end before yours")]
+fn sub_mandate_cannot_outlive_its_parent() {
+    let mut w = setup();
+    let (_, runner) = team(&mut w);
+    as_agent(&runner, T0 + 300);
+    let _ = w.v.delegate(agent_key(30), "late".into(), 1, U128(USDC / 10), None, Some(T0 + 7_200_000));
+}
+
+#[test]
+#[should_panic(expected = "too deep")]
+fn sub_mandate_chain_has_a_depth_limit() {
+    let mut w = setup();
+    let (_, runner) = team(&mut w);
+    as_agent(&runner, T0 + 300);
+    let _ = w.v.delegate(agent_key(30), "d3".into(), 1, U128(USDC / 10), None, None);
+    as_agent(&agent_key(30), T0 + 400);
+    let _ = w.v.delegate(agent_key(31), "d4".into(), 1, U128(USDC / 20), None, None);
+}
+
+#[test]
+#[should_panic(expected = "only the owner or an agent above")]
+fn a_sub_agent_cannot_revoke_a_sibling() {
+    let mut w = setup();
+    let (scout, _) = team(&mut w);
+    as_agent(&w.agent.clone(), T0 + 300);
+    let _ = w.v.delegate(agent_key(40), "sibling".into(), 1, U128(USDC / 10), None, None);
+    as_agent(&agent_key(40), T0 + 400);
+    let _ = w.v.revoke_delegate(scout);
+}
+
+#[test]
+#[should_panic(expected = "agent methods must be called with a vault-issued agent key")]
+fn outsider_cannot_delegate() {
+    let mut w = setup();
+    as_account(&acc("mallory.testnet"), T0 + 100, NearToken::from_yoctonear(0));
+    let _ = w.v.delegate(agent_key(50), "mine".into(), 1, U128(USDC), None, None);
 }
