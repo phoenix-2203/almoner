@@ -43,12 +43,14 @@
       ["Price is within the per-purchase limit", zero || price <= BigInt(r.max_per_purchase), "OVER_PURCHASE_LIMIT", `${usdc(p.price)} against a limit of ${usdc(r.max_per_purchase)}.`],
       ["Price is below the owner-approval line", zero || price <= BigInt(r.approval_above), "NEEDS_APPROVAL", `${usdc(p.price)} against a line of ${usdc(r.approval_above)}. Above it, only the owner can approve.`],
     ];
+    const changed = p.mandate_version !== t.version; // the owner re-signed the rules after this decision
     const failed = checks.filter((c) => !c[1]);
     $("rChecks").innerHTML = checks.map((c, i) => `<div class="attack ${c[1] ? "" : "stopped"}"><div class="n mono">${i + 1}</div>
-      <div class="t"><b>${esc(c[0])}</b><span>${esc(c[3])}</span><div class="res"><span class="chip ${c[1] ? "ok" : "bad"}">${c[1] ? "✓ passes" : "✗ fails"}</span>${c[1] ? "" : ` <span class="mono">${esc(c[2])}</span>`}</div></div></div>`).join("");
+      <div class="t"><b>${esc(c[0])}</b><span>${esc(c[3])}</span><div class="res"><span class="chip ${c[1] ? "ok" : changed ? "warn" : "bad"}">${c[1] ? "✓ passes" : changed ? "would not pass under today's rules" : "✗ fails"}</span>${c[1] ? "" : ` <span class="mono">${esc(c[2])}</span>`}</div></div></div>`).join("");
     const agrees = failed.length ? failed.some((c) => c[2].includes(p.code)) || !["Escrowed", "Paid", "Delivered", "PayoutPending", "Reused"].includes(p.status) : true;
-    $("rNote").innerHTML = `<span class="chip ${agrees ? "ok" : "warn"}">${agrees ? "✓ the vault's decision agrees with these checks" : "these checks and the vault's decision differ"}</span> ` +
-      (p.mandate_version !== t.version ? `The rules have changed since (decided under version ${p.mandate_version}, now ${t.version}), so a difference can be expected. ` : "") +
+    $("rNote").innerHTML = (changed
+        ? `<span class="chip info">rules re-signed since</span> This was decided under version ${p.mandate_version} of the rules; the owner has since signed version ${t.version}. The checks above use today's rules, so they can differ from the decision made then. `
+        : `<span class="chip ${agrees ? "ok" : "warn"}">${agrees ? "✓ the vault's decision agrees with these checks" : "these checks and the vault's decision differ"}</span> `) +
       `The vault also checked things only it can see at that moment: the seller's signature on the quote, that the quote was unused and unexpired, the budget left, the hourly limit${chain.length ? ", and every sub-mandate above this agent" : ""}. A refusal for one of those shows its own code above.`;
 
     const mine = log.filter((e) => e.purchase_id === p.id);
