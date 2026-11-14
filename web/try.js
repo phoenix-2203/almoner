@@ -1,7 +1,8 @@
 // Almoner "Try it": sign real transactions in the browser with the published agent key.
 // Uses the same near-api-js as `npm run attack` (bundled into vendor/near.js).
 (() => {
-  const { cfg, view, usdc, esc, refresh } = window.Almoner;
+  const { cfg, viewOn, usdc, esc, refresh } = window.Almoner;
+  const view = (method, args) => viewOn(c.vault, method, args); // always the challenge vault
   const { Account, KeyPair } = window.NearApi;
   const $ = (id) => document.getElementById(id);
   const KEY_URL = (cfg.challenge && cfg.challenge.keyUrl) || "https://raw.githubusercontent.com/phoenix-2203/almoner/main/challenge.json";
