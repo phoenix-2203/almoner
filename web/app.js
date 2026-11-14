@@ -99,7 +99,7 @@
     const shown = purchases.filter((p) => filter === "All" || p.status === filter);
     $("pcount").textContent = `${purchases.length} newest first`;
     body("purchases").innerHTML = shown.map((p) => `<tr>
-      <td>${p.id}</td><td>${when(p.created_ms)}</td>
+      <td><a href="receipt.html?id=${p.id}&vault=${encodeURIComponent(cfg.vault)}" title="Receipt: why the vault decided this">${p.id}</a></td><td>${when(p.created_ms)}</td>
       <td><span class="chip ${tone[p.status] || ""}">${esc(p.status)}</span><div class="mono muted">${esc(p.code)}</div></td>
       <td class="mono">${esc(p.seller)}</td><td class="item mono">${esc(p.item)}<div class="muted">${esc(p.category)}</div></td>
       <td class="num">${usdc(p.price)}</td>
@@ -115,6 +115,17 @@
         <div class="muted">earned ${usdc(s.stats.earned)} · ${s.stats.rejected} rejected · ${s.stats.missed} missed</div>
         ${s.on_hold ? `<div class="bad">${esc(s.hold_reason)}</div>` : ""}</div>`;
     }).join("") || `<p class="muted">No sellers yet.</p>`;
+
+    // Sub-mandates: agents hiring agents. Absent on a vault whose contract predates them.
+    const subs = await view("get_sub_mandates").catch(() => []);
+    const agentName = (pk) => (subs.find((m) => m.agent === pk) || {}).name || "an owner-issued agent";
+    $("subsWrap").hidden = !subs.length;
+    $("subs").innerHTML = subs.slice().reverse().slice(0, 12).map((m) => `<div class="task"><strong>${esc(m.name)}</strong> <span class="chip">task #${m.task_id}</span> <span class="chip">depth ${m.depth}</span>
+      <span class="chip ${m.revoked ? "bad" : m.usable ? "ok" : "warn"}">${m.revoked ? "revoked" : m.usable ? "in force" : "stopped: a link above was revoked or expired"}</span>
+      <dl><dt>Handed out by</dt><dd>${esc(agentName(m.parent))}</dd>
+      <dt>Budget</dt><dd>${usdc(m.spent)} spent of ${usdc(m.budget)} · ${usdc(m.reserved)} in escrow · ${usdc(m.remaining)} left <span class="muted">(includes everything bought below it)</span></dd>
+      <dt>Per purchase</dt><dd>up to ${usdc(m.max_per_purchase)}</dd>
+      <dt>Ends</dt><dd>${when(m.expires_at_ms)}</dd></dl></div>`).join("");
 
     // Recompute the hash chain in the browser, independently of the contract.
     let prev = "0".repeat(64), ok = true;
@@ -142,7 +153,7 @@
     if ($("feed").children.length <= 1) $("feed").innerHTML = `<li class="muted">Couldn't reach NEAR just now. Retrying every 15 seconds.</li>`;
   };
   // Shared with try.js
-  window.Almoner = { cfg, view, usdc, esc, refresh: () => render().catch(showError) };
+  window.Almoner = { cfg, view, usdc, esc, when, tone, sha256hex, explorer, refresh: () => render().catch(showError) };
   render().catch(showError);
   setInterval(() => render().catch(showError), 15000);
 })();
