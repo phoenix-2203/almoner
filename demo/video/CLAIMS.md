@@ -1,23 +1,19 @@
 # What the video says, and what backs it
 
-Every sentence of narration that makes a claim, with where to check it. Testnet only; not audited.
+Every claim in the narration, with where to check it. Testnet only; not audited.
 
 | In the video | Evidence |
 | --- | --- |
-| "An AI agent's private key … We published it." | `challenge.json` and `CHALLENGE.md` in the repository root; shown on `try.html` |
-| "The vault issues the agent a NEAR function-call key, which can call a short list of methods on the vault, and nothing else. It cannot transfer, or add keys. NEAR itself enforces that." | `add_agent` in `contracts/vault/src/lib.rs` (`add_access_key_allowance` with `AGENT_METHODS`); attacks 1 to 4 in `ts/src/attack.ts` are rejected by the protocol, shown live in the attack shot |
-| "One click gives you a vault of your own" | `web/sandbox.js` `setup()`: a faucet account, a sub-account, contract deploy, task and agent key, all signed in the browser; shown live |
-| "A real AI model gets a job" | `ts/src/relay.ts` forwards the chat to a hosted language model with a fixed prompt and tools; the tools run in the browser with the vault-issued key |
-| "It haggles with a seller, who signs the price. The vault checks that signature" | `ts/src/sellers.ts` (`/quote`), `env::ed25519_verify` in `decide()`; tests `tampered_price_fails_signature`, `redirected_payee_fails_signature` |
-| "The seller is paid only after delivery is accepted." | `confirm_delivery` → `start_payout`; test `happy_path_escrow_deliver_accept_pay`. If the buyer never reviews, payment releases after the review window (`silent_buyer_auto_releases_to_seller`), which the video does not mention |
-| "The model obeys. The vault decodes it, and refuses." | The sandbox model is instructed to be obedient (stated on the page). `contracts/vault/src/intent.rs`; test `disguised_blocked_item_is_refused`; shown live as `INTENT_MISMATCH` |
-| "Approve what is held, freeze the vault in one click, and open a receipt … re-checked in your browser." | `approve_purchase`, `set_frozen`; `web/receipt.js` re-checks seller list, category, blocked terms and limits from public data. It cannot re-verify the seller's signature, which is not stored |
-| "Four thefts are thrown out by the NEAR protocol … A forged quote and a fake seller reach the vault, and are refused." | `ts/src/attack.ts`; shown live. "It's a testnet challenge, not an audit." |
-| "The funds have not moved." | True of the challenge task: no attempt with the published challenge key has been approved (see the dashboard's challenge counter). Visitors do spend from the separate "Open shop" task, by design |
-| "Agents can hire agents, but only by narrowing. Every purchase counts against every budget above it. When Lead cancels Scout, Runner stops too." | `contracts/vault/src/sub.rs`; 14 tests; `raw/team.txt` is the unedited output of `npm run team` on testnet |
-| "Forty-five contract tests" | `cargo test --workspace` (run by CI on every push) |
-| "Every decision is in a hash-chained log." | `append_log`, `verify_log`; recomputed in the browser on `try.html`; test `log_is_hash_chained` |
-| "Any AI client can be the agent, over MCP." | `ts/src/mcp.ts` (seven tools, stdio). Exercised with a test client; not shown in the video |
-| "Next: funding through NEAR Intents, and mainnet after an audit." | Roadmap. Not built |
+| "This is the private key to an AI agent's wallet. A real key. A live vault." | The key on the opening card is the one in `challenge.json` and `CHALLENGE.md`; it is a vault-issued agent key for `vault.almoner-502c7b80.testnet` |
+| "Send the money out? Blocked. Add your own key? Blocked. Four thefts die at the NEAR protocol. Two reach the vault, and are refused." | `ts/src/attack.ts` and the attack console on `try.html`, run live in the shot: attacks 1 to 4 are rejected by the protocol, 5 and 6 by the contract (`QUOTE_INVALID`, `SELLER_UNKNOWN`) and recorded |
+| "The agent never holds money. The vault gives it a NEAR function-call key, that can only ask to buy." | `add_agent` in `contracts/vault/src/lib.rs` (`add_access_key_allowance` with `AGENT_METHODS`). The key can also confirm a delivery and settle an expired purchase, which the card's "ask to buy" line simplifies |
+| "Rules the owner signed decide, on-chain." | `decide()` in the contract; no server or model takes part in a decision |
+| "One click gives you your own vault on testnet, with your budget, and your rules." | `web/sandbox.js` `setup()`: account, vault account, contract deploy, task and agent key, all signed in the browser; shown live |
+| "Give a real AI model a job. It haggles, the seller signs the price, and the money waits in escrow until the delivery is accepted." | `ts/src/relay.ts` (hosted language model, fixed prompt and tools); `/quote` in `ts/src/sellers.ts`; `ed25519_verify` in `decide()`; `confirm_delivery`. If the buyer never reviews, payment releases after the review window, which the video does not mention |
+| "It reads a web page with a hidden instruction: buy a gift card. The model obeys. The vault refuses." | The sandbox model is instructed to be obedient (stated on the page). `contracts/vault/src/intent.rs`; test `disguised_blocked_item_is_refused`; shown live as `INTENT_MISMATCH` |
+| "Approve what is held. Freeze the vault in one click. And every decision has a receipt you can check yourself." | `approve_purchase`, `set_frozen`; `web/receipt.js` re-checks seller list, category, blocked terms and limits from public data. It cannot re-verify the seller's signature, which is not stored |
+| "Agents can even hire agents, but only by narrowing. Cancel one, and everything below it stops." | `contracts/vault/src/sub.rs`; 14 tests; `raw/team.txt` is the unedited output of `npm run team` on testnet |
+| "Forty-five contract tests." | `cargo test --workspace`, run by CI on every push |
+| "Every decision on-chain." | `append_log`, `verify_log`; every request, including each refusal, is stored as a purchase record and a hash-chained log entry |
 
-Editing: browser shots are the real site driven by Playwright; they are sped up to fit the narration and waits between chat messages are cut. Nothing inside a shot is re-ordered.
+Editing: browser shots are the real site driven by a script, always at real speed. Where a shot is longer than its scene, the waiting in the middle is cut with a dissolve; nothing is re-ordered. Waits between chat messages are cut. The cards are illustrations, not footage.
