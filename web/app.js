@@ -15,13 +15,14 @@
   const ago = (ms) => { const s = Math.max(0, (Date.now() - ms) / 1000); return s < 90 ? "just now" : s < 5400 ? Math.round(s / 60) + " min ago" : s < 129600 ? Math.round(s / 3600) + " h ago" : Math.round(s / 86400) + " d ago"; };
   let filter = "All";
 
-  async function view(method, args = {}) {
+  const view = (method, args = {}) => viewOn(cfg.vault, method, args);
+  async function viewOn(account, method, args = {}) {
     const res = await fetch(cfg.rpc, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         jsonrpc: "2.0", id: "almoner", method: "query",
-        params: { request_type: "call_function", finality: "optimistic", account_id: cfg.vault, method_name: method, args_base64: btoa(JSON.stringify(args)) },
+        params: { request_type: "call_function", finality: "optimistic", account_id: account, method_name: method, args_base64: btoa(JSON.stringify(args)) },
       }),
     });
     const j = await res.json();
@@ -153,7 +154,7 @@
     if ($("feed").children.length <= 1) $("feed").innerHTML = `<li class="muted">Couldn't reach NEAR just now. Retrying every 15 seconds.</li>`;
   };
   // Shared with try.js
-  window.Almoner = { cfg, view, usdc, esc, when, tone, sha256hex, explorer, refresh: () => render().catch(showError) };
+  window.Almoner = { cfg, view, viewOn, usdc, esc, when, tone, sha256hex, explorer, refresh: () => render().catch(showError) };
   render().catch(showError);
   setInterval(() => render().catch(showError), 15000);
 })();
