@@ -64,6 +64,11 @@ if [ -z "$(major)" ] || [ "$(major)" -lt 20 ]; then
     echo "This server needs Node.js 20 or newer. Install it, then run this script again."; exit 1
   fi
 fi
+# Another app may already use the port. Stop ours, then take the first port nothing is listening on.
+ours() { curl -fsS "http://127.0.0.1:$1/health" 2>/dev/null | grep -q '"vault"'; }
+$SUDO systemctl stop almoner-shop 2>/dev/null || true
+sleep 1
+while ss -ltn 2>/dev/null | grep -qE "[:.]$PORT[[:space:]]"; do echo "Port $PORT is used by another app on this server; trying $((PORT + 1))."; PORT=$((PORT + 1)); done
 id almoner >/dev/null 2>&1 || $SUDO useradd --system --no-create-home --shell /usr/sbin/nologin almoner
 $SUDO chown almoner /etc/almoner/sellers.json && $SUDO chmod 600 /etc/almoner/sellers.json
 # The AI agent on the Sandbox page needs a model key (Groq). It stays on this server.
@@ -103,7 +108,7 @@ $SUDO systemctl daemon-reload
 $SUDO systemctl enable -q almoner-shop
 $SUDO systemctl restart almoner-shop
 sleep 2
-if ! curl -fsS "http://127.0.0.1:$PORT/health" >/dev/null; then
+if ! ours "$PORT"; then
   echo "The sellers' server did not start. Last lines of its log:"; $SUDO journalctl -u almoner-shop -n 15 --no-pager; exit 1
 fi
 echo "Sellers' server is running on 127.0.0.1:$PORT."
@@ -117,7 +122,14 @@ fi
 
 CF=/etc/caddy/Caddyfile
 if $SUDO grep -q "almoner-shop" "$CF"; then
-  echo "Caddy already forwards /api to it."
+  if $SUDO grep -A3 "almoner-shop" "$CF" | grep -q "reverse_proxy 127.0.0.1:$PORT\$"; then
+    echo "Caddy already forwards /api to it."
+  else
+    $SUDO cp "$CF" "$CF.bak-almoner-shop"
+    $SUDO sed -i "/almoner-shop/,/}/ s#reverse_proxy 127.0.0.1:[0-9]*#reverse_proxy 127.0.0.1:$PORT#" "$CF"
+    if $SUDO caddy validate --config "$CF" --adapter caddyfile >/dev/null 2>&1; then $SUDO systemctl reload caddy; echo "Caddy now forwards /api to port $PORT."
+    else $SUDO cp "$CF.bak-almoner-shop" "$CF"; echo "Could not update the /api rule in Caddy; the old Caddyfile was restored."; exit 1; fi
+  fi
 else
   $SUDO cp "$CF" "$CF.bak-almoner-shop"
   $SUDO awk -v d="$DOMAIN" -v p="$PORT" '
@@ -135,7 +147,7 @@ else
 fi
 REMOTE
   sleep 2
-  if curl -fsS "https://$DOMAIN/api/health" >/dev/null 2>&1; then echo "Checked: https://$DOMAIN/api/health answers."; else echo "! https://$DOMAIN/api/health did not answer yet. Wait a minute and open it in a browser."; fi
+  if curl -fsS "https://$DOMAIN/api/health" 2>/dev/null | grep -q '"vault"'; then echo "Checked: https://$DOMAIN/api/health answers."; else echo "! https://$DOMAIN/api/health did not answer as the sellers' server. Open it in a browser: it should show JSON starting with {\"ok\":true. If it shows another site, send Claude this output."; fi
 else
   echo "(No $BOOK yet: run 'npm run shop:setup' in ts/ to open the hands-on shop, then run this script again.)"
 fi
