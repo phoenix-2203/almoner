@@ -327,7 +327,15 @@
       else {
         msgs.push({ role: "user", content: text });
         for (let step = 0; step < 12; step++) {
-          const r = await api("/agent", { messages: msgs });
+          let r;
+          try { r = await api("/agent", { messages: msgs }); }
+          catch (e) {
+            if (!/busy/i.test(String(e.message))) throw e;
+            wait.textContent = "the AI provider is busy; trying again in a few seconds…";
+            await sleep(9000);
+            wait.textContent = "the agent is working…";
+            r = await api("/agent", { messages: msgs });
+          }
           const m = r.message;
           msgs.push(m);
           if (m.content && m.content.trim()) say("ai", esc(m.content.trim()));
@@ -349,7 +357,7 @@
   }
   $("chatForm").onsubmit = (ev) => { ev.preventDefault(); const t = $("chatInput").value; $("chatInput").value = ""; send(t); };
   $("chatNew").onclick = () => { if (talking) return; msgs = []; $("msgs").innerHTML = ""; greet(); };
-  const greet = () => say("ai", aiOn ? "I'm your purchasing agent. I hold a key your vault issued; it lets me ask, never take. What should I buy for the brief?" : "The AI model isn't switched on for this server, so I'm running fixed plans. Pick one of the first two suggestions below; everything else on this page still works.");
+  const greet = () => say("ai", aiOn ? "I'm your purchasing agent, a real language model. I hold a key your vault issued; it lets me ask, never take. What should I buy for the brief?" : "The AI model isn't switched on for this server, so I'm running fixed plans. Pick one of the first two suggestions below; everything else on this page still works.");
 
   async function enter() {
     $("live").hidden = false;
