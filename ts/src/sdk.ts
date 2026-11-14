@@ -124,6 +124,24 @@ export interface VaultView {
   log_head: string;
 }
 
+/** A sub-mandate an agent handed to a sub-agent (contracts/vault/src/sub.rs). */
+export interface SubMandateView {
+  agent: string;
+  parent: string;
+  name: string;
+  task_id: number;
+  budget: string;
+  max_per_purchase: string;
+  expires_at_ms: number;
+  spent: string;
+  reserved: string;
+  depth: number;
+  revoked: boolean;
+  created_ms: number;
+  remaining: string;
+  usable: boolean;
+}
+
 export interface LogEntry {
   seq: number;
   at_ms: number;
@@ -222,6 +240,8 @@ export class AlmonerVault {
   getPurchases = (limit = 50) => this.view<Purchase[]>("get_purchases", { limit });
   getLog = (from_index = 0, limit = 200) => this.view<LogEntry[]>("get_log", { from_index, limit });
   verifyLog = () => this.view<boolean>("verify_log");
+  /** Sub-mandates handed out by agents. Empty on a vault whose contract predates them. */
+  getSubMandates = () => this.view<SubMandateView[]>("get_sub_mandates").catch(() => [] as SubMandateView[]);
   getMandateJson = (task_id: number) => this.view<string | null>("get_mandate_json", { task_id });
 
   /** Remaining gas allowance (yoctoNEAR) of a function-call key on the vault, or null if the key is gone. */
@@ -264,6 +284,10 @@ export class AlmonerVault {
       confirmDelivery: (purchase_id: number, accept: boolean, note?: string) =>
         call<Purchase>("confirm_delivery", { purchase_id, accept, note: note ?? null }, 100n * TGAS),
       settleExpired: (purchase_id: number) => call<Purchase>("settle_expired", { purchase_id }, 100n * TGAS),
+      /** Hand part of the task to a sub-agent. Can only narrow; needs a key issued with the right to delegate. */
+      delegate: (a: { public_key: string; name: string; task_id: number; budget: string; max_per_purchase?: string; expires_at_ms?: number }) =>
+        call<void>("delegate", { public_key: a.public_key, name: a.name, task_id: a.task_id, budget: a.budget, max_per_purchase: a.max_per_purchase ?? null, expires_at_ms: a.expires_at_ms ?? null }, 40n * TGAS),
+      revokeDelegate: (public_key: string) => call<void>("revoke_delegate", { public_key }, 40n * TGAS),
     };
   }
 
@@ -277,8 +301,9 @@ export class AlmonerVault {
       createTask: (rules: TaskInput) => call<TaskView>("create_task", { rules }),
       updateTask: (task_id: number, rules: TaskInput) => call<TaskView>("update_task", { task_id, rules }),
       setTaskStatus: (task_id: number, status: TaskStatus) => call<void>("set_task_status", { task_id, status }),
-      addAgent: (public_key: string, name: string, task_ids: number[], allowanceYocto?: string) =>
-        call<void>("add_agent", { public_key, name, task_ids, allowance: allowanceYocto ?? null }, 50n * TGAS),
+      addAgent: (public_key: string, name: string, task_ids: number[], allowanceYocto?: string, canDelegate = false) =>
+        call<void>("add_agent", { public_key, name, task_ids, allowance: allowanceYocto ?? null, ...(canDelegate ? { can_delegate: true } : {}) }, 50n * TGAS),
+      revokeDelegate: (public_key: string) => call<void>("revoke_delegate", { public_key }),
       revokeAgent: (public_key: string) => call<void>("revoke_agent", { public_key }),
       approve: (purchase_id: number) => call<Purchase>("approve_purchase", { purchase_id }),
       reject: (purchase_id: number, note?: string) => call<Purchase>("reject_purchase", { purchase_id, note: note ?? null }),
