@@ -26,7 +26,9 @@ mod types;
 
 #[cfg(test)]
 mod tests;
+pub mod sub;
 
+pub use sub::{SubMandate, SubMandateView};
 pub use types::*;
 
 use near_sdk::json_types::{Base64VecU8, U128};
@@ -43,6 +45,8 @@ pub const SELLER_REGISTRATION_DEPOSIT: NearToken = NearToken::from_millinear(10)
 /// Default gas allowance for an agent key: 0.25 NEAR of gas.
 pub const DEFAULT_AGENT_ALLOWANCE: NearToken = NearToken::from_millinear(250);
 pub const AGENT_METHODS: &str = "request_purchase,confirm_delivery,settle_expired";
+/// Method list for agents that may also hand out sub-mandates (see `sub.rs`).
+pub const AGENT_METHODS_DELEGATING: &str = "request_purchase,confirm_delivery,settle_expired,delegate,revoke_delegate";
 
 const HOUR_MS: u64 = 3_600_000;
 const MIN_WINDOW_MS: u64 = 60_000;
@@ -226,6 +230,7 @@ impl Vault {
         name: String,
         task_ids: Vec<TaskId>,
         allowance: Option<NearToken>,
+        can_delegate: Option<bool>,
     ) -> Promise {
         self.assert_owner();
         let pk = String::from(&public_key);
@@ -253,7 +258,7 @@ impl Vault {
             public_key,
             allowance,
             env::current_account_id(),
-            AGENT_METHODS,
+            if can_delegate.unwrap_or(false) { AGENT_METHODS_DELEGATING } else { AGENT_METHODS },
         )
     }
 
@@ -305,7 +310,7 @@ impl Vault {
         } else if self.available() < price {
             Some(("INSUFFICIENT_FUNDS", "Vault doesn't hold enough free funds.".into()))
         } else {
-            None
+            self.sub_check_links(&p.agent, p.task_id, now).or_else(|| self.sub_check_budget(&p.agent, price))
         };
         let mut updated = p.clone();
         if let Some((code, detail)) = failure {
@@ -318,6 +323,7 @@ impl Vault {
             return updated;
         }
         self.reserve(p.task_id, price);
+        self.sub_reserve(&p.agent, price);
         updated.status = PurchaseStatus::Escrowed;
         updated.code = "APPROVED_BY_OWNER".into();
         updated.detail = "Approved by the owner after re-checking every hard rule; funds held in escrow.".into();
@@ -539,6 +545,7 @@ impl Vault {
             Decision::Escrow(detail) => {
                 let window = self.task_or_panic(task_id).rules.delivery_window_ms;
                 self.reserve(task_id, quote.price.0);
+                self.sub_reserve(&agent_pk, quote.price.0);
                 p.status = PurchaseStatus::Escrowed;
                 p.code = "APPROVED_ESCROW".into();
                 p.detail = detail;
@@ -574,6 +581,7 @@ impl Vault {
             PurchaseStatus::Escrowed => {
                 require!(now > p.deliver_by_ms, "delivery window still open");
                 self.release(p.task_id, p.price.0);
+                self.sub_release(&p.agent, p.price.0);
                 p.status = PurchaseStatus::Refunded;
                 p.code = "REFUND_NOT_DELIVERED".into();
                 p.detail = "Seller didn't deliver in time; the reservation went back to the task. Seller put on hold.".into();
@@ -635,6 +643,7 @@ impl Vault {
             task.reserved += p.price.0;
             self.balance += p.price.0;
             self.reserved += p.price.0;
+            self.sub_unspend(&p.agent, p.price.0);
             p.status = PurchaseStatus::Delivered;
             p.code = "PAYOUT_FAILED".into();
             p.detail = "Token transfer failed; funds are still reserved. Review again to retry.".into();
@@ -786,6 +795,9 @@ impl Vault {
         if now > task.rules.expires_at_ms {
             return Decline("TASK_EXPIRED", format!("Task #{} has expired.", task_id));
         }
+        if let Some((code, detail)) = self.sub_check_links(agent_pk, task_id, now) {
+            return Decline(code, detail);
+        }
         if mandate_hash != task.mandate_hash {
             return Decline(
                 "MANDATE_CHANGED",
@@ -865,6 +877,9 @@ impl Vault {
         if self.available() < price {
             return Decline("INSUFFICIENT_FUNDS", "The vault doesn't hold enough free funds.".into());
         }
+        if let Some((code, detail)) = self.sub_check_budget(agent_pk, price) {
+            return Decline(code, detail);
+        }
         if price > task.rules.approval_above.0 {
             return Hold("Above the approval line: waiting for the owner. Budget untouched.".into());
         }
@@ -880,6 +895,7 @@ impl Vault {
         }
         let now = env::block_timestamp_ms();
         self.release(p.task_id, p.price.0);
+        self.sub_release(&p.agent, p.price.0);
         p.status = PurchaseStatus::Refunded;
         p.code = "REFUND_REJECTED".into();
         p.detail = format!(
@@ -907,6 +923,7 @@ impl Vault {
         task.spent += price;
         self.reserved -= price;
         self.balance -= price;
+        self.sub_spend(&p.agent, price);
         p.status = PurchaseStatus::PayoutPending;
         p.code = "PAYOUT_PENDING".into();
         p.detail = detail.to_string();
