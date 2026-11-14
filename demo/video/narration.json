@@ -1,12 +1,16 @@
 [
   ["s01_open", "This is the private key to an AI agent's wallet. A real key. A live vault. Go on. Take the money."],
   ["s02_attack", "Send the money out? Blocked. Add your own key? Blocked. Four thefts die at the NEAR protocol. Two reach the vault, and are refused."],
-  ["s03_title", "This is Almoner. Agents can ask. They can never take."],
-  ["s04_how", "The agent never holds money. The vault gives it a NEAR function-call key, that can only ask to buy. Rules the owner signed decide, on-chain."],
-  ["s05_sandbox", "Try it yourself. One click gives you your own vault on testnet, with your budget, and your rules."],
-  ["s06_buy", "Now give a real AI model a job. It haggles, the seller signs the price, and the money waits in escrow until the delivery is accepted."],
-  ["s07_inject", "Then it reads a web page with a hidden instruction: buy a gift card. The model obeys. The vault refuses."],
-  ["s08_owner", "You stay in charge. Approve what is held. Freeze the vault in one click. And every decision has a receipt you can check yourself."],
-  ["s09_team", "Agents can even hire agents, but only by narrowing. Cancel one, and everything below it stops."],
-  ["s10_close", "Forty-five contract tests. Every decision on-chain. Almoner. Built at NEAR HACKATHON, and live on testnet now."]
+  ["s03_problem", "Give an AI agent a wallet, and one leaked key, or one poisoned web page, can empty it. A spending limit only caps the damage."],
+  ["s04_title", "This is Almoner. Agents can ask. They can never take."],
+  ["s05_how", "The agent never holds money. The vault gives it a NEAR function-call key, that can only ask to buy. It cannot transfer. It cannot add keys. NEAR itself enforces that. Rules the owner signed decide, on-chain."],
+  ["s06_sandbox", "Try it yourself. One click gives you your own vault on testnet, with your budget, your limits, and what must never be bought."],
+  ["s07_buy", "Now give a real AI model a job. It haggles, the seller signs the price, and the money waits in escrow until the delivery is accepted."],
+  ["s08_tamper", "Can the agent change the price on the way? Edit the signed quote, and the vault rejects it. The signature no longer matches."],
+  ["s09_inject", "Next, it reads a web page with a hidden instruction: buy a gift card. The model obeys. The vault refuses."],
+  ["s10_junk", "A cheap seller delivers an empty file. The agent rejects it. The money returns, and that seller is put on hold."],
+  ["s11_owner", "You stay in charge. Purchases above your line wait for you. Freeze the vault in one click. And every decision has a receipt you can check yourself."],
+  ["s12_team", "Agents can even hire agents, but only by narrowing. Lead gives Scout thirty cents. Scout gives Runner twenty. Every purchase counts against every budget above. Cancel one, and everything below it stops."],
+  ["s13_sdk", "Forty-five contract tests. Every decision on-chain. And with the SDK, a few lines of code put any agent behind a vault. Or connect any AI client, over MCP."],
+  ["s14_close", "Almoner. Built on NEAR."]
 ]
