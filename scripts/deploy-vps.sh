@@ -66,6 +66,15 @@ if [ -z "$(major)" ] || [ "$(major)" -lt 20 ]; then
 fi
 id almoner >/dev/null 2>&1 || $SUDO useradd --system --no-create-home --shell /usr/sbin/nologin almoner
 $SUDO chown almoner /etc/almoner/sellers.json && $SUDO chmod 600 /etc/almoner/sellers.json
+# The AI agent on the Sandbox page needs a model key (Groq). It stays on this server.
+if [ ! -s /etc/almoner/relay.env ]; then
+  if [ -r /etc/acan/relay.env ] && $SUDO grep -q '^GROQ_API_KEY=' /etc/acan/relay.env; then
+    $SUDO sh -c "umask 077; grep '^GROQ_API_KEY=' /etc/acan/relay.env > /etc/almoner/relay.env"
+    echo "AI agent: reusing the model key already on this server."
+  else
+    NEED_KEY=1
+  fi
+fi
 $SUDO tee /etc/systemd/system/almoner-shop.service >/dev/null <<UNIT
 [Unit]
 Description=Almoner demo sellers (quotes and deliveries for the Try it page)
@@ -78,6 +87,7 @@ Environment=ALMONER_SELLERS_FILE=/etc/almoner/sellers.json
 Environment=SELLERS_PORT=$PORT
 Environment=SELLERS_HOST=127.0.0.1
 Environment=NEAR_NETWORK=testnet
+EnvironmentFile=-/etc/almoner/relay.env
 ExecStart=$(command -v node) /opt/almoner/shop-server.mjs
 Restart=always
 RestartSec=3
@@ -97,6 +107,13 @@ if ! curl -fsS "http://127.0.0.1:$PORT/health" >/dev/null; then
   echo "The sellers' server did not start. Last lines of its log:"; $SUDO journalctl -u almoner-shop -n 15 --no-pager; exit 1
 fi
 echo "Sellers' server is running on 127.0.0.1:$PORT."
+if [ -n "${NEED_KEY:-}" ]; then
+  echo
+  echo "! The Sandbox page's AI agent is OFF: this server has no model key yet (the page falls back to fixed plans)."
+  echo "  To turn it on, log in to the server and run this one line. It asks for a Groq API key (console.groq.com, free) and hides what you paste:"
+  echo "    sudo sh -c 'umask 077; printf \"Groq key: \"; stty -echo; read k; stty echo; echo; printf \"GROQ_API_KEY=%s\\n\" \"\$k\" > /etc/almoner/relay.env; systemctl restart almoner-shop'"
+  echo
+fi
 
 CF=/etc/caddy/Caddyfile
 if $SUDO grep -q "almoner-shop" "$CF"; then
