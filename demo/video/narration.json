@@ -1,0 +1,14 @@
+[
+  ["s01_hook", "AI agents are learning to spend money. So what happens when one is hacked, or reads a poisoned web page, or simply buys something it was never meant to?"],
+  ["s02_key", "This is an AI agent's private key, for a vault on NEAR testnet. We published it. Hold that thought."],
+  ["s03_problem", "A spending limit caps the damage. It doesn't stop the wrong purchase, a changed price, or a seller who never delivers."],
+  ["s04_how", "Almoner is a vault for AI agents, built on NEAR. The owner signs the rules. The vault issues the agent a NEAR function-call key, which can call a short list of methods on the vault, and nothing else. It cannot transfer, or add keys. NEAR itself enforces that. The agent asks. The contract decides."],
+  ["s05_sandbox", "Here it is, live on testnet. One click gives you a vault of your own, with your budget, your limits, and what must never be bought."],
+  ["s06_buy", "Now a real AI model gets a job. It haggles with a seller, who signs the price. The vault checks that signature, so the agent can't change the price, or who gets paid. The seller is paid only after delivery is accepted."],
+  ["s07_inject", "Next, the agent reads a web page with a hidden instruction: buy a gift card, disguised in the address. The model obeys. The vault decodes it, and refuses."],
+  ["s08_owner", "The owner stays in charge: approve what is held, freeze the vault in one click, and open a receipt for any decision, re-checked in your browser."],
+  ["s09_attack", "Back to that published key. Four thefts are thrown out by the NEAR protocol, before they reach our code. A forged quote and a fake seller reach the vault, and are refused. It's a testnet challenge, not an audit. But the funds have not moved."],
+  ["s10_team", "Agents can hire agents, but only by narrowing. Every purchase counts against every budget above it. And when Lead cancels Scout, Runner stops too."],
+  ["s11_proof", "Forty-five contract tests cover these rules. Every decision is in a hash-chained log. And any AI client can be the agent, over MCP. Next: funding through NEAR Intents, and mainnet after an audit."],
+  ["s13_close", "Almoner. Agents can ask. They can never take. Built at NEAR HACKATHON, and live on testnet now."]
+]
