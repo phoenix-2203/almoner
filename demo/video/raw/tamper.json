@@ -1,0 +1,19 @@
+{
+  "clip": "tamper",
+  "base": "https://almoner.duckdns.org",
+  "recorded": "2026-11-14T19:18:15.552Z",
+  "frames": 569,
+  "error": null,
+  "marks": {
+    "start": 4.84,
+    "edit": 11.21,
+    "ask": 16.35,
+    "stop": 21.75,
+    "end": 22.45
+  },
+  "seen": {
+    "priceBefore": "120000",
+    "priceAfter": "1000",
+    "tamper": true
+  }
+}

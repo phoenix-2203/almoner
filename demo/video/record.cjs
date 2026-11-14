@@ -172,8 +172,16 @@ async function clip(browser, name, fn) {
       await show("#chat .chatbox", 72, 1200); await wait(300);
       mark(key);
       await click(`#chips button[data-i="${i}"]`);
+      // Follow the conversation: when its newest line drops towards the subtitle band, glide the page up.
+      const follow = async (ms) => {
+        const [bottom, y] = await page.locator("#msgs").evaluate((el, Z) => [el.getBoundingClientRect().bottom / Z, scrollY], ZOOM);
+        if (bottom > 560) await page.evaluate(([t, ms]) => window.__glide(t, ms), [y + bottom - 500, ms]);
+      };
+      const until = Date.now() + 180000;
+      while (await page.locator("#chatSend").isDisabled() && Date.now() < until) { await follow(700); await wait(350); }
       await chatDone();
       await page.locator("#msgs").evaluate((el) => el.scrollTo({ top: el.scrollHeight, behavior: "smooth" }));
+      await wait(400); await follow(900);
       await wait(1600);
       mark(key + "End");
       return page.locator("#msgs").innerText();
@@ -209,8 +217,8 @@ async function clip(browser, name, fn) {
     if (href) {
       await page.goto(new URL(href, page.url()).href, { waitUntil: "networkidle" });
       await wait(900); mark("receipt");
-      await wait(900);
-      await show("#rChecks", 150, 1500); await wait(2800);
+      await wait(400);
+      await show("#rChecks .attack.stopped", 250, 1300); await wait(1800); // land on the failed check, clear of the subtitle; short enough to play uncut
       seen.receipt = /INTENT_MISMATCH/.test(await page.locator("#rChecks").innerText());
       mark("receiptEnd");
     }
@@ -233,7 +241,7 @@ async function clip(browser, name, fn) {
     await wait(400); mark("start");
     for (let i = 0; i < lines.length; i++) {
       await page.evaluate((i) => { const el = document.querySelectorAll(".l")[i]; el.classList.add("on"); const o = document.getElementById("out"); const over = el.offsetTop - o.offsetTop + el.offsetHeight - o.clientHeight + 60; if (over > 0) o.scrollTo({ top: over, behavior: "smooth" }); }, i);
-      await wait(lines[i].trim() ? 330 : 140);
+      await wait(lines[i].trim() ? 500 : 210); // paced to last as long as its narration, so the shot never sits frozen
     }
     await wait(2200); mark("stop");
   });

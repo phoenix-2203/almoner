@@ -28,7 +28,7 @@ SCENES = [
     ("s03_problem", [("card", "problem", 1)], 0.6),
     ("s04_title", [("card", "title", 1)], 0.6),
     ("s05_how", [("card", "how", 1)], 0.6),
-    ("s06_sandbox", [("clip", "sandbox", "rules", "ready", 1)], 0.8),
+    ("s06_sandbox", [("clip", "sandbox", "rules", "create", 0.55), ("clip", "sandbox", "create", "ready", 0.45)], 0.8),
     ("s07_buy", [("clip", "sandbox", "buy", "buyEnd", 1)], 1.6),
     ("s08_tamper", [("clip", "tamper", "edit", "stop", 1)], 1.6),
     ("s09_inject", [("clip", "sandbox", "inject", "injectEnd", 1)], 1.8),
@@ -110,11 +110,11 @@ def main():
             if s[0] == "clip":
                 base = meta(s[1]).get("base", "")
                 simulated |= "localhost" in base or "127.0.0.1" in base
-        filters.append("".join(f"[v{k}]" for k in range(len(shots))) + f"concat=n={len(shots)}:v=1:a=0,fade=t=in:st=0:d=0.25:color={BG},format=yuv420p[v]")
+        filters.append("".join(f"[v{k}]" for k in range(len(shots))) + f"concat=n={len(shots)}:v=1:a=0,fade=t=in:st=0:d=0.25:color={BG},scale=out_range=tv,format=yuv420p[v]")  # footage is full-range, cards are not: one range for every part
         filters.append(f"[{i}:a]adelay={int(LEAD * 1000)}:all=1,apad,atrim=duration={D:.3f},aresample=48000,aformat=channel_layouts=stereo[a]")
         part = os.path.join(OUT, name + ".mp4")
         run(ins + ["-i", narr, "-filter_complex", ";".join(filters), "-map", "[v]", "-map", "[a]", "-t", f"{D:.3f}",
-                   "-c:v", "libx264", "-preset", "veryfast", "-crf", "15", "-r", str(FPS), "-c:a", "aac", "-b:a", "192k", part])
+                   "-c:v", "libx264", "-preset", "veryfast", "-crf", "15", "-color_range", "tv", "-r", str(FPS), "-c:a", "aac", "-b:a", "192k", part])
         for s0, s1, text in json.load(open(p("audio", name + ".json"))):
             events.append((t + LEAD + s0, t + LEAD + s1 + 0.15, "Sub", text))
         if name == "s12_team":

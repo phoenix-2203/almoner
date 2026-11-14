@@ -1,0 +1,38 @@
+{
+  "clip": "sandbox",
+  "base": "https://almoner.duckdns.org",
+  "recorded": "2026-11-14T19:30:11.702Z",
+  "frames": 1393,
+  "error": null,
+  "marks": {
+    "rules": 4.33,
+    "create": 8.9,
+    "ready": 45.27,
+    "buy": 47.04,
+    "buyEnd": 65.88,
+    "inject": 87.66,
+    "injectEnd": 99.9,
+    "junk": 121.67,
+    "junkEnd": 171.74,
+    "hold": 193.52,
+    "holdEnd": 256.56,
+    "owner": 258.63,
+    "approved": 263.54,
+    "frozen": 269.57,
+    "ownerEnd": 273.34,
+    "receipt": 275.91,
+    "receiptEnd": 279.71,
+    "end": 280.41
+  },
+  "seen": {
+    "vault": "vault.almoner-sbx-544b4a72.testnet",
+    "buyPaid": true,
+    "buyApproved": true,
+    "injectRefused": true,
+    "junkRefunded": true,
+    "holdWaiting": true,
+    "approved": true,
+    "frozen": true,
+    "receipt": true
+  }
+}

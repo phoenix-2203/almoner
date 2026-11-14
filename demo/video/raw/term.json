@@ -1,0 +1,15 @@
+{
+  "clip": "term",
+  "base": "https://almoner.duckdns.org",
+  "recorded": "2026-11-14T19:30:30.128Z",
+  "frames": 558,
+  "error": null,
+  "marks": {
+    "start": 0.38,
+    "stop": 16.05,
+    "end": 16.75
+  },
+  "seen": {
+    "lines": 32
+  }
+}
