@@ -2,7 +2,8 @@
 // Quotes and deliveries come from the demo sellers' server; every request to the
 // vault is signed here in the browser with the published shop key (shop.json).
 (() => {
-  const { cfg, view, usdc, esc, refresh } = window.Almoner;
+  const { cfg, viewOn, usdc, esc, refresh } = window.Almoner;
+  const view = (method, args) => viewOn(s.vault, method, args); // always the shop's vault, whatever the dashboard shows
   const { Account } = window.NearApi;
   const $ = (id) => document.getElementById(id);
   const SHOP_URL = (cfg.shop && cfg.shop.keyUrl) || "https://raw.githubusercontent.com/phoenix-2203/almoner/main/shop.json";
