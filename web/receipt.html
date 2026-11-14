@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Almoner receipt</title>
+<meta name="description" content="A NEAR vault for AI agents. The agent's key can only ask to buy; rules a person signed decide; junk deliveries are refunded.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Almoner: agents can ask, never take">
+<meta property="og:description" content="A NEAR vault for AI agents. We published the agent's private key. Try to take the money.">
+<meta property="og:url" content="https://phoenix-2203.github.io/almoner/">
+<meta property="og:image" content="https://phoenix-2203.github.io/almoner/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Almoner: agents can ask, never take">
+<meta name="twitter:description" content="A NEAR vault for AI agents. We published the agent's private key. Try to take the money.">
+<meta name="twitter:image" content="https://phoenix-2203.github.io/almoner/og.png">
+<meta name="theme-color" content="#060606">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23ff6b1a'/%3E%3Ccircle cx='16' cy='13' r='4.2' fill='%23060606'/%3E%3Cpath d='M13.4 15h5.2l2.1 9h-9.4z' fill='%23060606'/%3E%3C/svg%3E">
+<script>
+  // Theme: saved choice first, then the system setting. Runs before paint to avoid a flash.
+  (function () { var t = null; try { t = localStorage.getItem("almoner-theme"); } catch (e) {} if (!t) t = matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark"; document.documentElement.dataset.theme = t; })();
+</script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="product">
+<a class="skip" href="#top">Skip to content</a>
+<header class="top">
+  <a class="brand" href="index.html"><svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><rect x="6" y="6" width="52" height="52" rx="14" fill="currentColor"/><circle cx="32" cy="26" r="8" class="cut"/><path d="M27 30h10l4 17H23z" class="cut"/></svg><span>Almoner</span></a>
+  <nav>
+    <a href="try.html#shop">Be the agent</a>
+    <a href="try.html#live">Live vault</a>
+    <a href="index.html">About</a>
+    <a href="https://github.com/phoenix-2203/almoner" target="_blank" rel="noopener">GitHub</a>
+  </nav>
+  <button type="button" id="theme" class="themebtn" aria-label="Switch between light and dark" title="Light / dark"><span class="sun">☀</span><span class="moon">☾</span></button>
+  <a class="btn small" href="try.html#live"><span aria-hidden="true">←</span> All decisions</a>
+</header>
+<main id="top" class="wrap">
+  <section class="tryhead">
+    <span class="eyebrow"><i class="dot"></i> Receipt · read from NEAR and re-checked in your browser</span>
+    <h1 class="h1s" id="rTitle">Decision</h1>
+    <p class="sub" id="rSub">Loading…</p>
+  </section>
+  <section><div class="cards" id="rCards"></div></section>
+  <section>
+    <h2>Why the vault decided this</h2>
+    <p class="lede">Each rule below is re-checked here against the mandate stored on-chain, without trusting the vault's own explanation.</p>
+    <div class="attacks" id="rChecks"></div>
+    <p class="fine" id="rNote"></p>
+  </section>
+  <section>
+    <h2>What happened, in order</h2>
+    <div class="tablewrap"><table><thead><tr><th>Seq</th><th>When</th><th>Event</th><th>Code</th><th>Hash</th><th>Re-computed</th></tr></thead><tbody id="rLog"></tbody></table></div>
+    <p class="fine" id="rChain"></p>
+  </section>
+</main>
+<footer>Testnet only; tUSDC is a test token with no value. This page reads the vault straight from NEAR RPC, with no backend.</footer>
+<script src="config.js"></script>
+<script src="app.js"></script>
+<script src="receipt.js"></script>
+<script>
+  document.getElementById("theme").onclick = () => {
+    const next = document.documentElement.dataset.theme === "light" ? "dark" : "light";
+    document.documentElement.dataset.theme = next;
+    try { localStorage.setItem("almoner-theme", next); } catch (e) {}
+  };
+</script>
+</body>
+</html>
