@@ -1,0 +1,14 @@
+{
+  "network": "testnet",
+  "rpc": "https://rpc.testnet.fastnear.com",
+  "api": "https://almoner.duckdns.org/api",
+  "vault": "vault.almoner-502c7b80.testnet",
+  "token": "tusdc.almoner-502c7b80.testnet",
+  "taskId": 3,
+  "sellers": {
+    "datadesk": "datadesk.almoner-502c7b80.testnet",
+    "junkdata": "junkdata.almoner-502c7b80.testnet"
+  },
+  "agentPublicKey": "ed25519:CnUYSXiPjqL4z2G2R3rGrfgda58d9YjWdvpEDFkaGMMP",
+  "agentPrivateKey": "ed25519:5eWKgRtScBugWN5nV515LepTYnfscEu3gQ67aoroK3rjKbPBuSFaHxZRhKiU9Xf7eu1P7hddaH4mHop3cZH23ki1"
+}
