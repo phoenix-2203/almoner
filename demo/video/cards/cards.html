@@ -3,61 +3,67 @@
 @font-face{font-family:Inter;src:url(../../../web/fonts/inter.woff2) format("woff2");font-weight:100 900}
 @font-face{font-family:"JB Mono";src:url(../../../web/fonts/jbmono-400.woff2) format("woff2");font-weight:400}
 @font-face{font-family:"JB Mono";src:url(../../../web/fonts/jbmono-700.woff2) format("woff2");font-weight:700}
-*{box-sizing:border-box}html,body{margin:0;width:1920px;height:1080px;background:#0a0a0b;color:#f2f1ee;font-family:Inter,system-ui,sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased;font-feature-settings:"cv11","ss01"}
-.card{display:none;width:1920px;height:1080px;padding:110px 140px 190px;flex-direction:column;justify-content:center;position:relative}
-.card.on{display:flex}
-.card::after{content:"";position:absolute;inset:0;background:radial-gradient(900px 500px at 82% 8%,rgba(255,107,26,.10),transparent 70%);pointer-events:none}
-.k{font:500 24px "JB Mono",monospace;letter-spacing:.06em;color:#ff8040;margin-bottom:28px;text-transform:uppercase}
-h1{font-size:92px;line-height:1.04;letter-spacing:-.035em;font-weight:700;margin:0;max-width:1500px}h1 em{font-style:normal;color:#ff6b1a}
-h2{font-size:62px;line-height:1.08;letter-spacing:-.03em;font-weight:700;margin:0 0 54px}h2 em{font-style:normal;color:#ff6b1a}
-.mono{font-family:"JB Mono",monospace}.mut{color:#9a9993}
-.grid{display:grid;gap:26px}.g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:repeat(2,1fr)}
-.box{background:#121214;border:1px solid #232326;border-radius:22px;padding:34px 36px;position:relative;z-index:1}
-.box b{display:block;font-size:34px;letter-spacing:-.02em;margin-bottom:12px}.box p{margin:0;font-size:26px;line-height:1.4;color:#9a9993}
-.box .n{font:500 22px "JB Mono",monospace;color:#ff8040;margin-bottom:18px;display:block}
-.x{color:#f0627c}.ok{color:#ff8040}
-.flow{display:flex;align-items:stretch;gap:0;position:relative;z-index:1}.node{flex:1;background:#121214;border:1px solid #232326;border-radius:22px;padding:30px 28px;min-height:250px}
-.node.hot{border-color:#ff6b1a;box-shadow:inset 0 4px 0 #ff6b1a}.node small{font:500 20px "JB Mono",monospace;color:#ff8040;display:block;margin-bottom:14px;letter-spacing:.04em}
-.node b{font-size:32px;letter-spacing:-.02em;display:block;margin-bottom:10px}.node p{margin:0;font-size:23px;line-height:1.38;color:#9a9993}
-.arr{width:64px;display:flex;align-items:center;justify-content:center;color:#ff6b1a;font-size:40px}
-.list{display:grid;gap:14px;font-size:30px;position:relative;z-index:1}.list div{display:flex;gap:18px;align-items:baseline}.list i{font-style:normal;font-family:"JB Mono",monospace;font-size:26px;width:34px}
-.tag{display:inline-block;font:500 20px "JB Mono",monospace;padding:6px 14px;border-radius:8px;background:rgba(255,107,26,.13);color:#ff8040;margin-bottom:18px}.tag.r{background:#1b1b1e;color:#9a9993}
-.logo{width:150px;height:150px;border-radius:38px;background:#ff6b1a;position:relative;margin-bottom:48px}.logo::before{content:"";position:absolute;left:50%;top:27%;width:46px;height:46px;margin-left:-23px;border-radius:50%;background:#0a0a0b}.logo::after{content:"";position:absolute;left:50%;top:46%;margin-left:-26px;border:26px solid transparent;border-bottom:52px solid #0a0a0b;border-top:0}
-.foot{position:absolute;left:140px;bottom:200px;font:400 26px "JB Mono",monospace;color:#9a9993;z-index:1}
-.big{font-size:150px;font-weight:700;letter-spacing:-.04em;line-height:1;color:#ff6b1a}
+:root{--bg:#f6f4ef;--ink:#111112;--mut:#5f5d57;--card:#fff;--line:#e4e0d7;--acc:#f25c0a;--bad:#c2254a}
+*{box-sizing:border-box}html,body{margin:0;width:1920px;height:1080px;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased;font-feature-settings:"cv11","ss01"}
+.card{display:none;width:1920px;height:1080px;padding:100px 150px 170px;flex-direction:column;justify-content:center;position:relative}.card.on{display:flex}
+/* every animated element: .a with --d (delay, seconds). Stepped frame by frame by render.cjs, so motion is exact. */
+.a{animation:up .7s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--d)*1s)}
+@keyframes up{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
+.pop{animation:pop .6s cubic-bezier(.2,1.3,.4,1) both;animation-delay:calc(var(--d)*1s)}
+@keyframes pop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
+.k{font:500 24px "JB Mono",monospace;letter-spacing:.07em;color:var(--acc);text-transform:uppercase;margin-bottom:30px}
+h1{font-size:104px;line-height:1.03;letter-spacing:-.04em;font-weight:700;margin:0}h1 em,h2 em{font-style:normal;color:var(--acc)}
+h2{font-size:66px;line-height:1.08;letter-spacing:-.03em;font-weight:700;margin:0 0 60px}
+.mono{font-family:"JB Mono",monospace}
+.keybox{background:#111112;border-radius:22px;padding:38px 44px;margin:6px 0 40px;box-shadow:0 30px 60px -30px rgba(40,30,10,.45)}
+.keybox .lab{font:500 20px "JB Mono",monospace;color:#8a8882;letter-spacing:.05em;margin-bottom:16px}
+.type{display:inline-block;overflow:hidden;white-space:nowrap;vertical-align:bottom;font:400 24px "JB Mono",monospace;color:#ff8a3d;animation:type 2.5s steps(96,end) both;animation-delay:.5s;max-width:100%}
+@keyframes type{from{width:0}to{width:100%}}
+.chips{display:flex;gap:16px;margin-bottom:54px}.chip{font:500 24px "JB Mono",monospace;padding:10px 20px;border-radius:12px;background:var(--card);border:1px solid var(--line)}
+.flow{display:flex;align-items:stretch}.node{flex:1;background:var(--card);border:1px solid var(--line);border-radius:24px;padding:34px 32px;min-height:290px;box-shadow:0 24px 50px -34px rgba(40,30,10,.35)}
+.node.hot{border-color:var(--acc);box-shadow:inset 0 5px 0 var(--acc),0 24px 50px -34px rgba(40,30,10,.35)}
+.node small{font:500 20px "JB Mono",monospace;color:var(--acc);display:block;margin-bottom:16px;letter-spacing:.05em}.node b{font-size:36px;letter-spacing:-.02em;display:block;margin-bottom:12px}.node p{margin:0;font-size:25px;line-height:1.4;color:var(--mut)}
+.node .li{font:400 24px/1.75 "JB Mono",monospace}.ok{color:var(--acc)}.x{color:var(--bad)}
+.arr{width:72px;display:flex;align-items:center;justify-content:center;color:var(--acc);font-size:44px}
+.foot{margin-top:46px;font:400 27px "JB Mono",monospace;color:var(--mut)}
+.logo{width:150px;height:150px;border-radius:38px;background:var(--acc);position:relative;flex:none}.logo::before{content:"";position:absolute;left:50%;top:27%;width:46px;height:46px;margin-left:-23px;border-radius:50%;background:var(--bg)}.logo::after{content:"";position:absolute;left:50%;top:46%;margin-left:-26px;border:26px solid transparent;border-bottom:52px solid var(--bg);border-top:0}
+.brand{display:flex;align-items:center;gap:36px;margin-bottom:56px}.brand span{font-size:120px;font-weight:700;letter-spacing:-.04em}
+.stats{display:flex;gap:26px;margin-bottom:70px}.stat{flex:1;background:var(--card);border:1px solid var(--line);border-radius:24px;padding:34px 36px}.stat b{display:block;font-size:92px;letter-spacing:-.04em;line-height:1;color:var(--acc)}.stat span{display:block;font-size:30px;margin-top:14px;color:var(--mut)}
 </style></head><body>
 
-<section class="card" id="hook"><div class="k">The question</div><h1>What happens when an AI agent with money is <em>hacked</em>, <em>tricked</em>, or simply <em>wrong</em>?</h1></section>
+<section class="card" id="open" data-dur="7.2">
+  <div class="k a" style="--d:.1">An AI agent's private key · published on purpose</div>
+  <div class="keybox a" style="--d:.2"><div class="lab">agentPrivateKey</div><span class="type" id="thekey"></span></div>
+  <div class="chips"><span class="chip a" style="--d:3.7">a real key</span><span class="chip a" style="--d:5.0">a live vault · NEAR testnet</span></div>
+  <h1 class="a" style="--d:6.2">Go on. <em>Take the money.</em></h1>
+</section>
 
-<section class="card" id="problem"><div class="k">The problem</div><h2>A spending limit caps the damage.<br>It doesn't stop <em>these</em>.</h2>
-<div class="grid g3"><div class="box"><span class="n">01</span><b>The wrong purchase</b><p>Inside the budget, but nothing to do with the task. A poisoned web page is enough.</p></div>
-<div class="box"><span class="n">02</span><b>A changed price or payee</b><p>The agent, or whoever controls it, edits what was agreed on the way to the wallet.</p></div>
-<div class="box"><span class="n">03</span><b>A seller who never delivers</b><p>Payment is final the moment it is sent. Junk or nothing comes back.</p></div></div></section>
+<section class="card" id="title" data-dur="4.4">
+  <div class="brand"><div class="logo pop" style="--d:.3"></div><span class="a" style="--d:.5">Almoner</span></div>
+  <h1><span class="a" style="--d:1.7;display:inline-block">Agents can ask.</span><br><span class="a" style="--d:3.2;display:inline-block">They can never <em>take</em>.</span></h1>
+</section>
 
-<section class="card" id="how1"><div class="k">How Almoner works · 1</div><h2>The agent never holds money.<br>It holds a key that can only <em>ask</em>.</h2>
-<div class="flow"><div class="node"><small>OWNER</small><b>Signs the rules</b><p>Budget, limit per purchase, approval line, sellers, what must never be bought.</p></div><div class="arr">→</div>
-<div class="node hot"><small>VAULT · NEAR CONTRACT</small><b>Holds the funds</b><p>Adds a function-call access key for the agent to its own account.</p></div><div class="arr">→</div>
-<div class="node"><small>AGENT KEY</small><b>Can only ask</b><p class="mono" style="font-size:21px;line-height:1.6"><span class="ok">✓ request_purchase</span><br><span class="ok">✓ confirm_delivery</span><br><span class="x">✗ transfer</span> · <span class="x">✗ add keys</span><br><span class="x">✗ call the token</span></p></div></div>
-<div class="foot">The ✗ lines are enforced by the NEAR protocol, not by our code.</div></section>
+<section class="card" id="how" data-dur="9.6">
+  <div class="k a" style="--d:.2">How it works</div>
+  <h2 class="a" style="--d:.4">The agent never holds money.</h2>
+  <div class="flow">
+    <div class="node a" style="--d:7.3"><small>OWNER</small><b>Signs the rules</b><p>Budget, limits, sellers, and what must never be bought.</p></div><div class="arr a" style="--d:7.5">→</div>
+    <div class="node hot a" style="--d:2.6"><small>VAULT · NEAR CONTRACT</small><b>Holds the funds</b><p>Checks every request against the signed rules. Decides on-chain.</p></div><div class="arr a" style="--d:4.0">→</div>
+    <div class="node a" style="--d:4.2"><small>AGENT · FUNCTION-CALL KEY</small><b>Can only ask</b><div class="li"><div class="ok a" style="--d:5.0">✓ ask to buy</div><div class="x a" style="--d:5.5">✗ transfer</div><div class="x a" style="--d:5.9">✗ add keys</div></div></div>
+  </div>
+  <div class="foot a" style="--d:8.4">The ✗ lines are enforced by the NEAR protocol itself.</div>
+</section>
 
-<section class="card" id="how2"><div class="k">How Almoner works · 2</div><h2>The agent asks. <em>The contract decides.</em></h2>
-<div class="flow"><div class="node"><small>01 · QUOTE</small><b>Seller signs</b><p>Price, item and payee are signed. The vault verifies it with ed25519.</p></div><div class="arr">→</div>
-<div class="node hot"><small>02 · DECIDE</small><b>Vault checks</b><p>Purpose, blocked terms, limits, budget. Approve, hold for the owner, or refuse.</p></div><div class="arr">→</div>
-<div class="node"><small>03 · ESCROW</small><b>Money waits</b><p>Reserved in the vault until the seller delivers.</p></div><div class="arr">→</div>
-<div class="node"><small>04 · SETTLE</small><b>Pay or refund</b><p>Accepted: seller paid. Rejected or late: refunded, seller put on hold.</p></div></div>
-<div class="foot">Every decision, including every refusal, is written to a hash-chained log on-chain.</div></section>
+<section class="card" id="close" data-dur="7.4">
+  <div class="stats"><div class="stat a" style="--d:.4"><b>45</b><span>contract tests, run on every push</span></div><div class="stat a" style="--d:2.6"><b>100%</b><span>of decisions recorded on-chain, refusals included</span></div></div>
+  <div class="brand" style="margin-bottom:34px"><div class="logo pop" style="--d:4.6"></div><span class="a" style="--d:4.8">Almoner</span></div>
+  <div class="foot a" style="--d:5.7;margin-top:0">almoner.duckdns.org &nbsp;·&nbsp; github.com/phoenix-2203/almoner &nbsp;·&nbsp; Built at NEAR HACKATHON</div>
+</section>
 
-<section class="card" id="proof"><div class="k">Evidence</div><h2>Checked, not claimed.</h2>
-<div class="grid g3"><div class="box"><div class="big">45</div><b style="margin-top:14px">contract tests</b><p>Escrow, forged and replayed quotes, limits, refunds, sub-agents. Run on every push.</p></div>
-<div class="box"><span class="tag">hash-chained log</span><b>Every decision recorded</b><p>Recomputed in your browser and re-verified by the contract itself.</p></div>
-<div class="box"><span class="tag">MCP server</span><b>Any AI client</b><p>Claude Desktop, Cursor or any MCP client can be the agent, with the same key that can only ask.</p></div></div></section>
-
-<section class="card" id="future"><div class="k">Where this goes</div><h2>Agents that can be trusted with a budget.</h2>
-<div class="grid g2"><div class="box"><span class="tag">works today, on testnet</span><div class="list"><div><i class="ok">→</i>Research agents buying data and reports</div><div><i class="ok">→</i>Coding agents paying for APIs and compute</div><div><i class="ok">→</i>Teams of agents sharing one budget</div></div></div>
-<div class="box"><span class="tag r">roadmap, not built yet</span><div class="list mut"><div><i>○</i>Fund from any asset through NEAR Intents</div><div><i>○</i>Seller reputation shared across vaults</div><div><i>○</i>Mainnet with native USDC, after an audit</div></div></div></div></section>
-
-<section class="card" id="close"><div class="logo"></div><h1>Agents can ask.<br>They can never <em>take</em>.</h1>
-<div class="foot" style="bottom:210px">almoner.duckdns.org &nbsp;·&nbsp; github.com/phoenix-2203/almoner &nbsp;·&nbsp; Built at NEAR HACKATHON, November 2026</div></section>
-
-<script>const c=new URLSearchParams(location.search).get("c");const el=document.getElementById(c);if(el)el.classList.add("on");</script>
+<script>
+const q = new URLSearchParams(location.search);
+const el = document.getElementById(q.get("c")); if (el) el.classList.add("on");
+document.getElementById("thekey").textContent = q.get("key") || "ed25519:(run render.cjs from the repository so the published key is read from challenge.json)";
+window.seek = (t) => document.getAnimations().forEach((a) => { a.pause(); a.currentTime = t * 1000; });
+</script>
 </body></html>
