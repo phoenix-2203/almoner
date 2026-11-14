@@ -42,7 +42,8 @@
     let r;
     try { r = await fetch(API + path, body ? { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) } : { cache: "no-store" }); }
     catch (e) { throw new Error("The demo server did not answer. Try again in a moment."); }
-    const j = await r.json().catch(() => ({}));
+    const j = await r.json().catch(() => null);
+    if (j === null) throw new Error("The demo server isn't answering properly right now. Try again in a few minutes.");
     if (!r.ok) throw new Error(j.error || "The server answered " + r.status);
     return j;
   };
@@ -113,6 +114,7 @@
     },
     async join() {
       const h = await api("/health");
+      if (!h.sellers) throw new Error("The demo server isn't answering properly right now. Try again in a few minutes.");
       st.sellers = h.sellers; save();
       // Cover what registering costs the demo sellers.
       if (!st.tipped) { for (const id of Object.values(st.sellers)) await owner().transfer({ receiverId: id, amount: NEAR(0.05) }); st.tipped = true; save(); }

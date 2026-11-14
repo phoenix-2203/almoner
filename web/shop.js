@@ -29,7 +29,8 @@
     } catch (e) {
       throw new Error("The sellers' server did not answer. Try again in a moment.");
     }
-    const j = await r.json().catch(() => ({}));
+    const j = await r.json().catch(() => null);
+    if (j === null) throw new Error("The sellers' server isn't answering properly right now. Try again in a few minutes.");
     if (!r.ok) throw new Error(j.error || "The seller answered " + r.status);
     return j;
   };
