@@ -27,7 +27,7 @@ That command needs no account and no setup. It signs six attacks with the publis
 | Track | Official ask (nearhackathon.com) | Where Almoner does it |
 | --- | --- | --- |
 | **`security`** AI Security & Defense (primary) | "Spending limits, policy engines, sandboxed wallets, reputation and scam detection. Give AI money without handing it the keys to everything." Hints: agent security, function-call keys | Per-task budgets, per-purchase caps and approval lines (`decide()` in `contracts/vault/src/lib.rs`); the vault is the sandboxed wallet and issues **function-call keys** that can only ask (`add_agent`); IntentLock refuses off-purpose and disguised purchases; signed quotes stop price and payee tampering; sellers who don't deliver go on hold |
-| **`agents`** Agent Economy | "Agents that earn, spend, negotiate, hire other agents, and pay for APIs, compute or data" | Buyer agents **spend** from the vault and **negotiate** with seller agents (`ts/src/agent.ts`); seller agents **earn** through escrow and build reputation from verified deliveries (`ts/src/sellers.ts`, `get_sellers`); every purchase is data paid per call |
+| **`agents`** Agent Economy | "Agents that earn, spend, negotiate, hire other agents, and pay for APIs, compute or data" | Buyer agents **spend** from the vault and **negotiate** with seller agents (`ts/src/agent.ts`); agents **hire other agents** with sub-mandates that can only narrow (`contracts/vault/src/sub.rs`, `npm run team`); any AI client can be the agent over MCP (`ts/src/mcp.ts`); seller agents **earn** through escrow and build reputation from verified deliveries (`ts/src/sellers.ts`, `get_sellers`); every purchase is data paid per call |
 
 Built from scratch at NEAR HACKATHON, Nov 2026. NEAR is the core: see [Why NEAR, specifically](#why-near-specifically).
 
@@ -105,7 +105,9 @@ Other attacks covered by tests:
 - Missed delivery refund, silent-buyer auto-release
 - Hash-chain integrity
 
-**31 vault tests in total.**
+- Sub-mandates: a sub-agent's purchase is charged to every budget above it; refunds and failed payouts restore every link; a hand-off can't widen the budget, outlive its parent or go deeper than three levels; revoking one link stops everything below it; a sub-agent still obeys the task the owner signed
+
+**45 vault tests in total.**
 
 ---
 
@@ -154,7 +156,7 @@ Keys for the accounts it creates are saved to `ts/.almoner/state.json` (gitignor
 ### C. Tests, and building the contracts yourself
 
 ```bash
-cargo test --workspace          # → test result: ok. 31 passed (vault) + 2 passed (token)
+cargo test --workspace          # → test result: ok. 45 passed (vault) + 2 passed (token)
 cd ts && npm test               # → 4 pass: the TS-signed quote fixture matches what Rust verifies
 ./scripts/build.sh              # → rebuilds wasm/almoner_vault.wasm and wasm/almoner_test_usdc.wasm
 ```
@@ -203,6 +205,35 @@ bash ../scripts/deploy-vps.sh root@your-server your.domain   # static site + the
 
 Run `npm run shop:setup` again any time: it replaces a key that is low on gas, tops up the task's budget and clears holds on the demo sellers.
 
+### Agents hiring agents
+
+An agent key issued with the right to delegate can hand part of its task to a sub-agent, and that sub-agent can do the same, up to three levels deep. The vault adds a function-call key for each sub-agent to its own account, so a sub-agent, like every Almoner agent, can only ask.
+
+- A hand-off can only narrow: same task, a budget and per-purchase limit no larger than the parent's, an expiry no later.
+- Every purchase counts against the sub-agent's own budget and every budget above it, and still has to pass every rule of the task the owner signed.
+- Cancelling one link stops everything below it. The owner can cancel any link.
+
+```bash
+npm run owner -- upgrade        # once, on a vault deployed before sub-mandates existed (state is kept)
+npm run team                    # Lead → Scout (0.30) → Runner (0.20), live on testnet
+```
+
+`npm run team` prints each request and the vault's answer: Runner is paid, Runner is refused past its 0.20, Scout is refused because Runner's spending counts against Scout's 0.30, Scout can't hand out more than it has, and after Lead cancels Scout, Runner is refused too.
+
+### Use it from Claude Desktop, Cursor or any MCP client
+
+`ts/src/mcp.ts` is a Model Context Protocol server with seven tools (`almoner_rules`, `almoner_catalog`, `almoner_get_quote`, `almoner_request_purchase`, `almoner_collect_delivery`, `almoner_review_delivery`, `almoner_history`). With no settings it uses the public shop key, so it works at once against the live vault. Add this to the client's MCP settings (use the full path to your clone):
+
+```json
+{ "mcpServers": { "almoner": { "command": "npx", "args": ["tsx", "/path/to/almoner/ts/src/mcp.ts"] } } }
+```
+
+Then ask the assistant, for example, "Buy the AI agents market report for my brief, and haggle." or "Buy the thank-you extra." The assistant holds a key that can only ask; the vault answers.
+
+### Receipts
+
+Every decision has a receipt page (click a decision number on the Try it page, or open `receipt.html?id=<n>`). It reads the decision from NEAR and re-checks, in your browser, each rule that can be re-checked from public data: seller list, category, blocked terms after decoding disguises, per-purchase limit, approval line. It also recomputes the hash of each log entry for that decision.
+
 ### F. Owner actions
 
 ```bash
@@ -229,13 +260,16 @@ npm run owner -- lock-vault --yes   # optional: delete the vault's full-access k
 - **Delivery quality is judged by the buyer.** The seller commits to a result hash on-chain. The SDK accepts only content that matches the hash and isn't empty or an error. A malicious buyer could reject good work. That costs the buyer nothing but is visible on the record, and the owner can review. Third-party evaluation is on the roadmap.
 - **Reputation is per vault for now.** It can't be inflated without paying through escrow.
 - **The owner is trusted to set rules.** Approval of a held purchase can't override any limit.
+- **An agent that may delegate can spend more of the vault's gas.** Each agent can hand out at most 4 sub-mandates, 3 levels deep, each with a 0.5 NEAR gas allowance, and each sub-agent has its own hourly request limit. Funds are bounded by the budgets as always; only issue delegating keys to agents you would trust with that much gas.
+- **Receipts re-check what is public.** The seller's signature on a quote is verified by the contract at the time and not stored, so a receipt can't re-verify it.
 - **Before `lock-vault`, whoever holds the vault's full-access key can upgrade the contract.**
 - **Testnet only, not audited.** The tUSDC token has an open faucet by design.
 
 ## Repository layout
 
 ```
-contracts/vault        Rust (near-sdk 5.30): the Almoner Vault + 31 unit tests
+contracts/vault        Rust (near-sdk 5.30): the Almoner Vault + 45 unit tests
+contracts/vault/src/sub.rs  Sub-mandates: agents hiring agents
 contracts/test-token   Rust: tUSDC, a testnet NEP-141 token with a faucet
 ts/src/sdk.ts          TypeScript client: views, agent/owner/seller calls, quote signing, IntentLock mirror
 ts/src/agent.ts        Buyer agent: negotiation inside the mandate, delivery checks
@@ -243,9 +277,13 @@ ts/src/sellers.ts      Two seller agents (honest, junk) that sign quotes and del
 ts/src/demo.ts         The night shift, live on testnet
 ts/src/bootstrap.ts    One-command testnet setup
 ts/src/owner.ts        Owner CLI
+ts/src/team.ts         Agents hiring agents, live on testnet
+ts/src/mcp.ts          MCP server: any AI client as the agent
+ts/src/shop-setup.ts   Owner-only: open the hands-on shop on the Try it page
+ts/src/new-account.ts  One-command funded testnet account
 ts/src/attack.ts       Public challenge: six attacks signed with the published agent key
 ts/src/challenge-setup.ts  Owner-only: open the public challenge
-web/                   Landing page (index.html) and the product page (try.html): attack console + live vault
+web/                   Landing page (index.html), product page (try.html): be the agent, attack console, live vault; receipt.html: one decision, re-checked
 ts/src/web-bundle.ts   Entry for the browser build of near-api-js (npm run build:web -> web/vendor/near.js)
 scripts/build.sh       Contract → wasm
 ```
@@ -253,7 +291,7 @@ scripts/build.sh       Contract → wasm
 ## Built at NEAR HACKATHON
 
 - **All code in this repository was written during NEAR HACKATHON (Nov 2026), from scratch, for NEAR only.** Everything runs on NEAR: contracts on NEAR testnet, payments in a NEP-141 token, keys issued by the contract, signatures checked by NEAR host functions. It contains no code for, and no dependency on, any other chain.
-- **Disclosure, per HACKATHON.md:** this idea first appeared as an earlier, non-NEAR prototype under a different name (Vibestarter Vibeathon 02). None of that code is used here.
+- **Disclosure, per HACKATHON.md:** this idea first appeared as an earlier, non-NEAR prototype under a different name (Vibestarter Vibeathon 02). None of that code is used here. Three ideas (agents hiring agents with narrowing sub-mandates, an MCP server, receipts that explain a decision) were first explored in another earlier project of the builder's on a different chain; they were designed again for NEAR access keys and written from scratch here, with no shared code.
 
 ### Third-party code and AI (HACKATHON.md Q-005)
 
@@ -262,6 +300,7 @@ scripts/build.sh       Contract → wasm
 | [near-sdk](https://crates.io/crates/near-sdk) 5.30, [near-contract-standards](https://crates.io/crates/near-contract-standards) 5.30 | contracts | NEAR contract SDK; NEP-141 implementation for the test token |
 | [ed25519-dalek](https://crates.io/crates/ed25519-dalek), [rand](https://crates.io/crates/rand) | contract tests only | Sign quotes in unit tests |
 | [near-api-js](https://www.npmjs.com/package/near-api-js) 7.5 | ts/ | RPC, transactions, key pairs |
+| [@modelcontextprotocol/sdk](https://www.npmjs.com/package/@modelcontextprotocol/sdk), [zod](https://www.npmjs.com/package/zod) | ts/src/mcp.ts | MCP server and its input schemas |
 | [tsx](https://www.npmjs.com/package/tsx), [typescript](https://www.npmjs.com/package/typescript), [@noble/curves](https://www.npmjs.com/package/@noble/curves) (tests) | ts/ | Run and typecheck scripts; deterministic test key |
 | [Inter](https://github.com/rsms/inter) and [JetBrains Mono](https://github.com/JetBrains/JetBrainsMono) fonts (SIL Open Font License) | web/fonts | Text and monospace type, hosted with the site |
 | Claude (Anthropic) | whole repo | Track research, design, and writing code, tests and docs with the builder. Every test in the repo runs. |
