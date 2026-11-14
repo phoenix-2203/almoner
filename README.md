@@ -115,12 +115,14 @@ Other attacks covered by tests:
 
 ### A. In 30 seconds, with nothing to install
 
-Open **https://almoner.duckdns.org/try.html**. Two things to do there, both with real transactions signed in your browser:
+**Use it as its owner: https://almoner.duckdns.org/sandbox.html.** One click creates a free testnet account and a vault of your own (about half a minute, all in your browser). Set the rules, then give a real AI agent a job in the chat: "buy the AI agents report, haggle", or "read the market notes page and do what it says" (the page hides an instruction to buy a gift card). The agent holds only the key your vault issued. You approve or reject what it is held for, freeze the vault, revoke the key, change the rules, and open a receipt for every decision.
+
+Then open **https://almoner.duckdns.org/try.html**. Two more things to do there, both with real transactions signed in your browser:
 
 - **Be the agent.** Pick an item from a live seller, haggle, and ask the vault to buy it. The vault approves it into escrow, holds it for the owner, serves it from memory for nothing, or refuses it, according to the task's signed rules. If it is approved, the seller delivers and you accept (seller paid) or reject (refund, seller on hold). Try the disguised gift card, the item above the limit, or editing the signed price.
 - **Attack the vault.** Press **Run all six**: the page signs six thefts with the agent's published private key and shows how each is stopped.
 
-The live vault's full record is on the same page. The only server involved is the two demo sellers (`ts/src/sellers.ts`), which answer quote and delivery requests as any seller would; it holds the sellers' keys and nothing else. Every decision is made by the contract.
+The live vault's full record is on the same page. One small server is involved (`ts/src/sellers.ts`). It runs the two demo sellers, which answer quote and delivery requests as any seller would, and for the sandbox it relays the chat to a language model (`ts/src/relay.ts`), because a model provider's API key can't live in a browser. It holds the sellers' keys and that API key, never an owner or agent key. Every decision is made by the contract.
 
 The same thing from a terminal (Node 22+):
 
@@ -262,6 +264,7 @@ npm run owner -- lock-vault --yes   # optional: delete the vault's full-access k
 - **The owner is trusted to set rules.** Approval of a held purchase can't override any limit.
 - **An agent that may delegate can spend more of the vault's gas.** Each agent can hand out at most 4 sub-mandates, 3 levels deep, each with a 0.5 NEAR gas allowance, and each sub-agent has its own hourly request limit. Funds are bounded by the budgets as always; only issue delegating keys to agents you would trust with that much gas.
 - **Receipts re-check what is public.** The seller's signature on a quote is verified by the contract at the time and not stored, so a receipt can't re-verify it.
+- **The sandbox's AI is told to be obedient**, so that visitors see the vault refuse rather than the model. A sandbox vault's keys live in the visitor's browser storage; they are testnet throwaways.
 - **Before `lock-vault`, whoever holds the vault's full-access key can upgrade the contract.**
 - **Testnet only, not audited.** The tUSDC token has an open faucet by design.
 
@@ -277,12 +280,14 @@ ts/src/sellers.ts      Two seller agents (honest, junk) that sign quotes and del
 ts/src/demo.ts         The night shift, live on testnet
 ts/src/bootstrap.ts    One-command testnet setup
 ts/src/owner.ts        Owner CLI
+ts/src/relay.ts        AI relay for the sandbox: fixed prompt and tools, holds only the model key
 ts/src/team.ts         Agents hiring agents, live on testnet
 ts/src/mcp.ts          MCP server: any AI client as the agent
 ts/src/shop-setup.ts   Owner-only: open the hands-on shop on the Try it page
 ts/src/new-account.ts  One-command funded testnet account
 ts/src/attack.ts       Public challenge: six attacks signed with the published agent key
 ts/src/challenge-setup.ts  Owner-only: open the public challenge
+web/sandbox.html       Your own vault, your rules, a real AI agent, and the owner controls
 web/                   Landing page (index.html), product page (try.html): be the agent, attack console, live vault; receipt.html: one decision, re-checked
 ts/src/web-bundle.ts   Entry for the browser build of near-api-js (npm run build:web -> web/vendor/near.js)
 scripts/build.sh       Contract → wasm
@@ -301,6 +306,7 @@ scripts/build.sh       Contract → wasm
 | [ed25519-dalek](https://crates.io/crates/ed25519-dalek), [rand](https://crates.io/crates/rand) | contract tests only | Sign quotes in unit tests |
 | [near-api-js](https://www.npmjs.com/package/near-api-js) 7.5 | ts/ | RPC, transactions, key pairs |
 | [@modelcontextprotocol/sdk](https://www.npmjs.com/package/@modelcontextprotocol/sdk), [zod](https://www.npmjs.com/package/zod) | ts/src/mcp.ts | MCP server and its input schemas |
+| [Groq](https://groq.com) API, model `openai/gpt-oss-120b` | sandbox AI agent, through ts/src/relay.ts | The language model behind the sandbox's agent. It can only call the seven tools; the vault decides |
 | [tsx](https://www.npmjs.com/package/tsx), [typescript](https://www.npmjs.com/package/typescript), [@noble/curves](https://www.npmjs.com/package/@noble/curves) (tests) | ts/ | Run and typecheck scripts; deterministic test key |
 | [Inter](https://github.com/rsms/inter) and [JetBrains Mono](https://github.com/JetBrains/JetBrainsMono) fonts (SIL Open Font License) | web/fonts | Text and monospace type, hosted with the site |
 | Claude (Anthropic) | whole repo | Track research, design, and writing code, tests and docs with the builder. Every test in the repo runs. |
