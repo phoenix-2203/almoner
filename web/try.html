@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Try Almoner: attack the live vault</title>
+<title>Try Almoner: be the agent, or attack the vault</title>
 <meta name="description" content="A NEAR vault for AI agents. The agent's key can only ask to buy; rules a person signed decide; junk deliveries are refunded.">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Almoner: agents can ask, never take">
@@ -27,6 +27,7 @@
 <header class="top">
   <a class="brand" href="index.html"><svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><rect x="6" y="6" width="52" height="52" rx="14" fill="currentColor"/><circle cx="32" cy="26" r="8" class="cut"/><path d="M27 30h10l4 17H23z" class="cut"/></svg><span>Almoner</span></a>
   <nav>
+    <a href="#shop">Be the agent</a>
     <a href="#attack">Attack console</a>
     <a href="#custom">Your own call</a>
     <a href="#live">Live vault</a>
@@ -40,8 +41,83 @@
 <main id="top" class="wrap">
   <section class="tryhead">
     <span class="eyebrow"><i class="dot"></i> Live on NEAR testnet · real transactions</span>
-    <h1 class="h1s">You hold the agent's key.<br>Take the <mark>money</mark>.</h1>
-    <p class="sub">This page has the vault agent's real private key loaded. Every button signs a real transaction in your browser and sends it to NEAR. Nothing here is simulated.</p>
+    <h1 class="h1s">You are the agent.<br>Spend it, or try to <mark>take</mark> it.</h1>
+    <p class="sub">This page has real agent keys for a live vault loaded. Use one to shop the way an AI agent would, or use the other to attack the vault. Every button signs a real transaction in your browser and sends it to NEAR. Nothing here is simulated.</p>
+    <p class="jump"><a class="btn primary small" href="#shop">Be the agent</a> <a class="btn small" href="#attack">Attack the vault</a></p>
+  </section>
+
+  <section id="shop">
+    <p class="kicker">Be the agent</p>
+    <h2>Buy something with the vault's money</h2>
+    <p class="lede">You are an AI agent working on a research brief. The owner signed the rules below, and the vault checks every request against them. Buy what the task needs, haggle, then try something the owner would not want.</p>
+    <div class="cards" id="shopRules"></div>
+    <p class="fine" id="shopNote">Loading the shop…</p>
+
+    <div class="bench" id="bench" hidden>
+      <div class="bstep">
+        <div class="n mono">1</div>
+        <div class="t">
+          <b>Pick a seller and an item</b>
+          <div class="tabs" id="shopSellers"></div>
+          <div class="items" id="shopItems"></div>
+        </div>
+      </div>
+      <div class="bstep">
+        <div class="n mono">2</div>
+        <div class="t">
+          <b>Ask the seller for a signed quote</b>
+          <span>Offer less than the list price if you like. The seller accepts, or counters with its lowest price.</span>
+          <div class="row">
+            <label>Your offer (tUSDC)<input id="shopOffer" inputmode="decimal" placeholder="list price" autocomplete="off"></label>
+            <button type="button" class="btn small" id="shopQuote">Get quote</button>
+          </div>
+          <div id="shopQuoteOut" hidden>
+            <p class="fine" id="shopQuoteNote"></p>
+            <label class="block">The quote the seller signed. You may edit it; the vault will notice.<textarea id="shopQuoteJson" rows="11" spellcheck="false"></textarea></label>
+          </div>
+        </div>
+      </div>
+      <div class="bstep">
+        <div class="n mono">3</div>
+        <div class="t">
+          <b>Ask the vault to buy it</b>
+          <span>This signs <span class="mono">request_purchase</span> with the agent key and sends it to NEAR.</span>
+          <div class="row">
+            <label class="grow">Your reason, kept on the record<input id="shopReason" maxlength="200" value="Needed for the research brief"></label>
+            <button type="button" class="btn primary small" id="shopBuy" disabled>Ask the vault</button>
+          </div>
+          <div class="res" id="shopDecision" aria-live="polite"></div>
+        </div>
+      </div>
+      <div class="bstep" id="shopStep4" hidden>
+        <div class="n mono">4</div>
+        <div class="t">
+          <b>Delivery and review</b>
+          <span>The money is held by the vault, not paid. The seller is paid only if you accept what it delivers.</span>
+          <div class="row"><button type="button" class="btn small" id="shopDeliver">Ask the seller to deliver</button></div>
+          <div id="shopDelivered" hidden>
+            <pre class="term result" id="shopResult"></pre>
+            <div class="row">
+              <button type="button" class="btn primary small" id="shopAccept">Accept and pay the seller</button>
+              <button type="button" class="btn small" id="shopReject">Reject and get a refund</button>
+            </div>
+          </div>
+          <div class="res" id="shopSettle" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+    <div class="ideas" id="shopIdeas" hidden>
+      <b>Things to try</b>
+      <ul>
+        <li>Buy a report, accept it, then buy the same one again. The vault remembers and serves it for nothing.</li>
+        <li>Buy the "Thank-you extra". Its address hides a gift card; the task forbids those.</li>
+        <li>Buy the Analyst briefing (0.30). It is above the approval line, so it waits for the owner. You cannot approve it.</li>
+        <li>Buy the Premium deep dive (0.60). It is above the per-purchase limit.</li>
+        <li>Get a quote, lower the price in the text, and send it.</li>
+        <li>Buy from JunkData, look at what it delivers, and reject it.</li>
+      </ul>
+    </div>
+    <p class="fine">Purchases you accept really pay the seller in tUSDC, within the task's budget. That is the vault working as designed. Your requests appear under "Every decision" below, next to everyone else's.</p>
   </section>
 
   <section class="keycard" id="keycard" aria-live="polite">
@@ -99,11 +175,12 @@
     <div class="tablewrap"><table id="log"><thead><tr><th>Seq</th><th>When</th><th>Event</th><th>Code</th><th>Hash</th></tr></thead><tbody></tbody></table></div>
   </section>
 </main>
-<footer>Testnet only; tUSDC is a test token with no value. This page reads the vault straight from NEAR RPC, with no backend. <span id="updated"></span></footer>
+<footer>Testnet only; tUSDC is a test token with no value. This page reads the vault straight from NEAR RPC. Only the demo sellers run on a server, as sellers would. <span id="updated"></span></footer>
 <script src="config.js"></script>
 <script src="app.js"></script>
 <script src="vendor/near.js"></script>
 <script src="try.js"></script>
+<script src="shop.js"></script>
 <script>
   document.getElementById("theme").onclick = () => {
     const next = document.documentElement.dataset.theme === "light" ? "dark" : "light";
