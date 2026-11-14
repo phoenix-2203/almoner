@@ -138,6 +138,25 @@ footer { text-align:center; color:var(--muted); font-size:13px; padding:28px 16p
 .attack .n { font:500 13px "JB Mono",ui-monospace,monospace; color:var(--muted); padding-top:3px; min-width:20px; } .attack .n::before { content:"0"; }
 .attack .t b { display:block; font-size:16px; font-weight:600; letter-spacing:-.01em; } .attack .t > span { color:var(--muted); font-size:14px; } .attack .res { margin-top:10px; font-size:14px; overflow-wrap:anywhere; } .attack .res:empty { display:none; }
 .attack.running { box-shadow:inset 3px 0 0 var(--info); } .attack.stopped { box-shadow:inset 3px 0 0 var(--accent); background:color-mix(in srgb, var(--accent) 3%, var(--card)); } .attack.stopped .n { color:var(--accent-t); } .attack.through { box-shadow:inset 3px 0 0 var(--bad); }
+[hidden] { display:none !important; }
+body.product main > section > .kicker + h2 { margin-top:0; }
+#shopRules .v { font-size:16px; word-break:normal; overflow-wrap:anywhere; }
+.jump { display:flex; gap:10px; flex-wrap:wrap; margin:22px 0 0; }
+.lede { color:var(--muted); max-width:760px; margin:-8px 0 22px; }
+.bench { border:1px solid var(--line); border-radius:14px; overflow:hidden; background:var(--card); margin-top:6px; }
+.bstep { display:grid; grid-template-columns:auto minmax(0,1fr); gap:18px; padding:22px 20px; border-bottom:1px solid var(--line); } .bstep:last-child { border-bottom:0; } .bstep[hidden] { display:none; }
+.bstep .n { font:500 13px "JB Mono",ui-monospace,monospace; color:var(--accent-t); padding-top:3px; min-width:20px; } .bstep .n::before { content:"0"; }
+.bstep .t > b { display:block; font-size:16px; font-weight:600; letter-spacing:-.01em; } .bstep .t > span { display:block; color:var(--muted); font-size:14px; }
+.bstep .row { display:flex; gap:12px; flex-wrap:wrap; align-items:end; margin-top:14px; } .bstep label { display:grid; gap:6px; font-size:13px; color:var(--muted); min-width:0; } .bstep label.grow { flex:1 1 280px; } .bstep label.block { margin-top:12px; }
+.bstep input { min-width:0; width:100%; } .bstep label:not(.grow) input { width:150px; }
+.bstep textarea { width:100%; padding:12px 14px; border:1px solid var(--term-line); border-radius:10px; background:var(--term); color:var(--term-ink); font:400 12.5px/1.55 "JB Mono",ui-monospace,monospace; resize:vertical; } .bstep textarea:focus { outline:none; border-color:var(--accent-t); }
+.bstep .res { margin-top:14px; font-size:14.5px; overflow-wrap:anywhere; } .bstep .res:empty { display:none; } .bstep .res .mono { color:var(--muted); }
+.bstep .term.result { margin:14px 0 0; max-height:220px; overflow:auto; }
+.btn:disabled { opacity:.45; cursor:not-allowed; }
+.tabs { display:flex; gap:6px; flex-wrap:wrap; margin:14px 0 12px; } .tabs button { background:transparent; color:var(--muted); padding:6px 14px; font-size:13.5px; border:1px solid var(--line); border-radius:999px; cursor:pointer; } .tabs button.on { background:var(--ink); border-color:var(--ink); color:var(--bg); }
+.items { display:grid; gap:8px; } .item-opt { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:4px 14px; text-align:left; width:100%; padding:12px 14px; border:1px solid var(--line); border-radius:10px; background:var(--card2); color:var(--ink); cursor:pointer; transition:border-color .15s; }
+.item-opt:hover { border-color:var(--muted); } .item-opt.on { border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); } .item-opt b { font-weight:600; font-size:14.5px; } .item-opt .p { font-variant-numeric:tabular-nums; font-weight:600; font-size:14.5px; } .item-opt .u { grid-column:1 / -1; color:var(--muted); font:400 12px "JB Mono",ui-monospace,monospace; overflow-wrap:anywhere; }
+.ideas { margin-top:18px; padding:18px 20px; border:1px dashed var(--rule); border-radius:14px; font-size:14.5px; } .ideas ul { margin:8px 0 0; padding-left:20px; color:var(--muted); } .ideas li { margin:4px 0; }
 .custom { display:flex; gap:12px; flex-wrap:wrap; align-items:end; margin-bottom:14px; } .custom label { display:grid; gap:6px; font-size:13px; color:var(--muted); min-width:0; } .custom label.grow { flex:1 1 260px; }
 .custom input:not([type=checkbox]) { min-width:0; width:100%; font-family:"JB Mono",ui-monospace,monospace; font-size:13px; } .custom label.check { display:flex; align-items:center; gap:7px; padding-bottom:11px; }
 .term.result { border:1px solid var(--term-line); border-radius:12px; white-space:pre-wrap; overflow-wrap:anywhere; font-size:13px; min-height:56px; }
