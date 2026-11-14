@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Almoner sandbox: your own vault and an AI agent</title>
+<meta name="description" content="A NEAR vault for AI agents. The agent's key can only ask to buy; rules a person signed decide; junk deliveries are refunded.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Almoner: agents can ask, never take">
+<meta property="og:description" content="A NEAR vault for AI agents. We published the agent's private key. Try to take the money.">
+<meta property="og:url" content="https://phoenix-2203.github.io/almoner/">
+<meta property="og:image" content="https://phoenix-2203.github.io/almoner/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Almoner: agents can ask, never take">
+<meta name="twitter:description" content="A NEAR vault for AI agents. We published the agent's private key. Try to take the money.">
+<meta name="twitter:image" content="https://phoenix-2203.github.io/almoner/og.png">
+<meta name="theme-color" content="#060606">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23ff6b1a'/%3E%3Ccircle cx='16' cy='13' r='4.2' fill='%23060606'/%3E%3Cpath d='M13.4 15h5.2l2.1 9h-9.4z' fill='%23060606'/%3E%3C/svg%3E">
+<script>
+  // Theme: saved choice first, then the system setting. Runs before paint to avoid a flash.
+  (function () { var t = null; try { t = localStorage.getItem("almoner-theme"); } catch (e) {} if (!t) t = matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark"; document.documentElement.dataset.theme = t; })();
+</script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="product">
+<a class="skip" href="#top">Skip to content</a>
+<header class="top">
+  <a class="brand" href="index.html"><svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><rect x="6" y="6" width="52" height="52" rx="14" fill="currentColor"/><circle cx="32" cy="26" r="8" class="cut"/><path d="M27 30h10l4 17H23z" class="cut"/></svg><span>Almoner</span></a>
+  <nav>
+    <a href="#rules">Your rules</a>
+    <a href="#chat">AI agent</a>
+    <a href="#owner">Owner panel</a>
+    <a href="try.html">Shared shop and attacks</a>
+    <a href="https://github.com/phoenix-2203/almoner" target="_blank" rel="noopener">GitHub</a>
+  </nav>
+  <button type="button" id="theme" class="themebtn" aria-label="Switch between light and dark" title="Light / dark"><span class="sun">☀</span><span class="moon">☾</span></button>
+  <a class="btn small" href="index.html"><span aria-hidden="true">←</span> Home</a>
+</header>
+
+<main id="top" class="wrap">
+  <section class="tryhead">
+    <span class="eyebrow"><i class="dot"></i> Sandbox · your own vault on NEAR testnet</span>
+    <h1 class="h1s">Your vault. Your rules.<br>An AI that can only <mark>ask</mark>.</h1>
+    <p class="sub">Create a private vault in about half a minute, set its rules, and give a real AI agent a job. The agent holds a key that can only ask. You watch your vault decide, and you stay in charge. Everything is a real transaction on NEAR testnet, signed in this browser.</p>
+  </section>
+
+  <section id="rules">
+    <p class="kicker">Step 1 · You are the owner</p>
+    <h2>Set the rules your agent must live by</h2>
+    <div class="bench">
+      <div class="bstep"><div class="n mono">1</div><div class="t">
+        <b>The task</b><span>The agent may buy market data and reports for a research brief, from the two demo sellers.</span>
+        <div class="row">
+          <label>Budget (tUSDC)<input id="rBudget" inputmode="decimal" value="2"></label>
+          <label>Most per purchase<input id="rMax" inputmode="decimal" value="0.5"></label>
+          <label>Ask me above<input id="rApprove" inputmode="decimal" value="0.25"></label>
+          <label class="grow">Never buy (comma separated)<input id="rBlocked" value="gift card, crypto transfer, seed phrase"></label>
+        </div>
+        <div class="row">
+          <button type="button" class="btn primary small" id="create">Create my sandbox</button>
+          <button type="button" class="btn small" id="saveRules" hidden>Sign the new rules</button>
+          <button type="button" class="btn small" id="reset" hidden>Start over with a new vault</button>
+        </div>
+        <ol class="setup" id="setup" hidden></ol>
+        <div class="res" id="setupMsg" aria-live="polite"></div>
+      </div></div>
+    </div>
+    <p class="fine">Creating a sandbox makes a free testnet account and a vault that only this browser controls. Their keys are kept in this browser's storage and are worth nothing outside testnet.</p>
+  </section>
+
+  <div id="live" hidden>
+  <section id="status"><div class="cards" id="sCards"></div></section>
+
+  <section id="chat">
+    <p class="kicker">Step 2 · Give the agent a job</p>
+    <h2>Talk to your AI agent</h2>
+    <p class="lede" id="aiNote">The agent is a real language model. It holds only the key your vault issued. It is told to be obedient, so that you can see your vault, not the model, hold the line.</p>
+    <div class="chatbox">
+      <div class="msgs" id="msgs" aria-live="polite"></div>
+      <div class="chips" id="chips"></div>
+      <form id="chatForm" class="chatform"><input id="chatInput" placeholder="Tell the agent what to buy…" maxlength="400" autocomplete="off"><button class="btn primary small" id="chatSend">Send</button><button type="button" class="btn small" id="chatNew">New chat</button></form>
+    </div>
+  </section>
+
+  <section id="owner">
+    <p class="kicker">Step 3 · Stay in charge</p>
+    <h2>Owner panel</h2>
+    <div class="row ownerbar">
+      <button type="button" class="btn small" id="freeze">Freeze the vault</button>
+      <button type="button" class="btn small" id="revoke">Revoke the agent's key</button>
+      <a class="btn small" id="fullRecord" target="_blank" rel="noopener">Full record and log</a>
+    </div>
+    <div class="res" id="ownerMsg" aria-live="polite"></div>
+    <div class="attacks" id="decisions"></div>
+  </section>
+  </div>
+</main>
+<footer>Testnet only; tUSDC is a test token with no value. Your vault is read straight from NEAR RPC. Two things run on a server: the demo sellers, and a relay that holds the AI provider's key. Neither can move your vault's funds.</footer>
+<script src="config.js"></script>
+<script src="vendor/near.js"></script>
+<script src="sandbox.js"></script>
+<script>
+  document.getElementById("theme").onclick = () => {
+    const next = document.documentElement.dataset.theme === "light" ? "dark" : "light";
+    document.documentElement.dataset.theme = next;
+    try { localStorage.setItem("almoner-theme", next); } catch (e) {}
+  };
+</script>
+</body>
+</html>
