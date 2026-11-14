@@ -191,7 +191,7 @@ export function startSellers(port = Number(process.env.SELLERS_PORT ?? 8787)) {
           joins.clear();
         }
         const mine = joins.get(ip(req)) ?? 0;
-        if (mine >= 4 || joinsToday >= 200) return json(res, 429, { error: "Sandbox limit reached for today. You can still use the shared shop on the Try it page." });
+        if (mine >= Number(process.env.SANDBOX_PER_VISITOR ?? 12) || joinsToday >= Number(process.env.SANDBOX_DAILY ?? 300)) return json(res, 429, { error: "Sandbox limit reached for today. You can still use the shared shop on the Try it page." });
         joins.set(ip(req), mine + 1);
         joinsToday++;
         const run = busyJoin.then(() => join(body.vault));
