@@ -12,6 +12,8 @@
     "owner": "tsx --env-file-if-exists=.env src/owner.ts",
     "challenge:setup": "tsx --env-file-if-exists=.env src/challenge-setup.ts",
     "shop:setup": "tsx --env-file-if-exists=.env src/shop-setup.ts",
+    "team": "tsx --env-file-if-exists=.env src/team.ts",
+    "mcp": "tsx src/mcp.ts",
     "attack": "tsx src/attack.ts",
     "build:shop": "esbuild src/shop-server.ts --bundle --format=esm --platform=node --target=node20 --legal-comments=none --banner:js=\"import{createRequire as __cr}from'node:module';const require=__cr(import.meta.url);\" --outfile=dist/shop-server.mjs",
     "build:web": "esbuild src/web-bundle.ts --bundle --format=iife --global-name=NearApi --platform=browser --target=es2020 --minify --legal-comments=none --alias:util=./src/web-util-shim.cjs --outfile=../web/vendor/near.js",
@@ -20,7 +22,9 @@
   },
   "license": "MIT",
   "dependencies": {
-    "near-api-js": "^7.5.3"
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "near-api-js": "^7.5.3",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@noble/curves": "^2.4.0",
