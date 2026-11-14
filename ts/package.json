@@ -5,12 +5,15 @@
   "type": "module",
   "description": "Almoner on NEAR: agent SDK, demo sellers, night-shift demo and owner CLI",
   "scripts": {
+    "new-account": "tsx src/new-account.ts",
     "bootstrap": "tsx --env-file-if-exists=.env src/bootstrap.ts",
     "sellers": "tsx --env-file-if-exists=.env src/sellers.ts",
     "demo": "tsx --env-file-if-exists=.env src/demo.ts",
     "owner": "tsx --env-file-if-exists=.env src/owner.ts",
     "challenge:setup": "tsx --env-file-if-exists=.env src/challenge-setup.ts",
+    "shop:setup": "tsx --env-file-if-exists=.env src/shop-setup.ts",
     "attack": "tsx src/attack.ts",
+    "build:shop": "esbuild src/shop-server.ts --bundle --format=esm --platform=node --target=node20 --legal-comments=none --banner:js=\"import{createRequire as __cr}from'node:module';const require=__cr(import.meta.url);\" --outfile=dist/shop-server.mjs",
     "build:web": "esbuild src/web-bundle.ts --bundle --format=iife --global-name=NearApi --platform=browser --target=es2020 --minify --legal-comments=none --alias:util=./src/web-util-shim.cjs --outfile=../web/vendor/near.js",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test test/*.test.ts"
