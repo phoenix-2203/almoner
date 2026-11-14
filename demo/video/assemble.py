@@ -10,13 +10,13 @@ from cards/render.cjs), raw/<clip>.mp4 + .json (live footage and its marks, from
 Each scene lasts as long as its narration plus a short beat. Live footage always plays at real speed: when a
 shot is longer than its scene, the middle (waiting) is cut with a short dissolve, so the action that starts a
 step and the result that ends it are both seen as they happened. Needs python3 and ffmpeg with libass.
-The target is under 2:20, the limit for video on X without Premium; the script warns if the result is longer.
+The target is about 2:30; the script warns past 2:38.
 """
 import json, os, subprocess, sys, wave
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "out")
-FPS, LEAD, XF, LIMIT = 30, 0.45, 0.4, 140
+FPS, LEAD, XF, LIMIT = 30, 0.45, 0.4, 160
 BG = "0xf6f4ef"
 p = lambda *a: os.path.join(HERE, *a)
 
@@ -24,15 +24,19 @@ p = lambda *a: os.path.join(HERE, *a)
 # beat = seconds the picture runs on after the narration ends.
 SCENES = [
     ("s01_open", [("card", "open", 1)], 0.7),
-    ("s02_attack", [("clip", "attack", "start", "stop", 1)], 1.6),
-    ("s03_title", [("card", "title", 1)], 0.7),
-    ("s04_how", [("card", "how", 1)], 0.7),
-    ("s05_sandbox", [("clip", "sandbox", "rules", "ready", 1)], 0.9),
-    ("s06_buy", [("clip", "sandbox", "buy", "buyEnd", 1)], 1.8),
-    ("s07_inject", [("clip", "sandbox", "inject", "injectEnd", 1)], 2.0),
-    ("s08_owner", [("clip", "sandbox", "owner", "approved", 0.32), ("clip", "sandbox", "approved", "frozen", 0.3), ("clip", "sandbox", "receipt", "receiptEnd", 0.38)], 1.0),
-    ("s09_team", [("clip", "term", "start", "stop", 1)], 1.6),
-    ("s10_close", [("card", "close", 1)], 1.6),
+    ("s02_attack", [("clip", "attack", "start", "stop", 1)], 1.5),
+    ("s03_problem", [("card", "problem", 1)], 0.6),
+    ("s04_title", [("card", "title", 1)], 0.6),
+    ("s05_how", [("card", "how", 1)], 0.6),
+    ("s06_sandbox", [("clip", "sandbox", "rules", "ready", 1)], 0.8),
+    ("s07_buy", [("clip", "sandbox", "buy", "buyEnd", 1)], 1.6),
+    ("s08_tamper", [("clip", "tamper", "edit", "stop", 1)], 1.6),
+    ("s09_inject", [("clip", "sandbox", "inject", "injectEnd", 1)], 1.8),
+    ("s10_junk", [("clip", "sandbox", "junk", "junkEnd", 1)], 1.8),
+    ("s11_owner", [("clip", "sandbox", "owner", "approved", 0.32), ("clip", "sandbox", "approved", "frozen", 0.3), ("clip", "sandbox", "receipt", "receiptEnd", 0.38)], 1.0),
+    ("s12_team", [("clip", "term", "start", "stop", 1)], 1.4),
+    ("s13_sdk", [("card", "sdk", 1)], 0.8),
+    ("s14_close", [("card", "close", 1)], 2.8),
 ]
 
 
@@ -113,7 +117,7 @@ def main():
                    "-c:v", "libx264", "-preset", "veryfast", "-crf", "15", "-r", str(FPS), "-c:a", "aac", "-b:a", "192k", part])
         for s0, s1, text in json.load(open(p("audio", name + ".json"))):
             events.append((t + LEAD + s0, t + LEAD + s1 + 0.15, "Sub", text))
-        if name == "s09_team":
+        if name == "s12_team":
             events.append((t + 0.3, t + D - 0.15, "Tag", "Real output of  npm run team  on NEAR testnet"))
         elif any(s[0] == "clip" for s in shots):
             events.append((t + 0.3, t + D - 0.15, "Tag", "SIMULATED PREVIEW · not real transactions" if simulated else "LIVE · NEAR testnet · real transactions"))
@@ -154,7 +158,7 @@ def main():
               f"[0:a][m]amix=inputs=2:duration=first:normalize=0,alimiter=limit=0.95[a]")
         run(["-i", joined, "-stream_loop", "-1", "-i", p("music.mp3"), "-filter_complex", f"[0:v]{vf}[v];{af}", "-map", "[v]", "-map", "[a]"] + enc + ["-t", f"{total:.2f}", final])
     if total > LIMIT - 2:
-        print(f"\n! The video is {total:.0f}s. X allows {LIMIT}s without Premium: shorten narration.json (then tts.py) or the beats in SCENES.")
+        print(f"\n! The video is {total:.0f}s, longer than planned: shorten narration.json (then tts.py) or the beats in SCENES.")
     print(f"\n{final}\n  {int(total // 60)}:{total % 60:04.1f}, 1920x1080, {FPS} fps, {os.path.getsize(final) / 1e6:.1f} MB"
           + ("\n  NOTE: built from SIMULATED footage (recorded against a local mock). Not for submission." if simulated else ""))
 
