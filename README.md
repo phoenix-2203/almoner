@@ -1,5 +1,7 @@
 # Almoner on NEAR
 
+[![Almoner: agents can ask, they can never take](web/og.png)](https://almoner.duckdns.org/)
+
 **Every agent purchase, accounted for, and enforced by a NEAR contract.**
 
 AI agents now buy data, APIs and compute by themselves, a few cents at a time. A spending cap answers "can the agent afford this?". It doesn't answer "is this what the agent was asked to buy, did we pay what was quoted, did we get what we paid for, and can we prove it?" Almoner answers those questions in a NEAR contract that the agent can't get around.
@@ -109,36 +111,34 @@ Other attacks covered by tests:
 
 ## Run it
 
-### Prerequisites
+### A. In 30 seconds, with nothing to install
 
-- Rust ≥ 1.95 with `wasm32-unknown-unknown`, plus [cargo-near](https://github.com/near/cargo-near). `rust-toolchain.toml` sets this up.
-- Node 22+.
-- A NEAR **testnet** account with about 9 NEAR. [Create one with near-cli-rs or MyNearWallet](https://docs.near.org/tools/near-cli). Use testnet only.
+Open **https://almoner.duckdns.org/try.html**. Two things to do there, both with real transactions signed in your browser:
 
-### 1. Run the tests (no network needed)
+- **Be the agent.** Pick an item from a live seller, haggle, and ask the vault to buy it. The vault approves it into escrow, holds it for the owner, serves it from memory for nothing, or refuses it, according to the task's signed rules. If it is approved, the seller delivers and you accept (seller paid) or reject (refund, seller on hold). Try the disguised gift card, the item above the limit, or editing the signed price.
+- **Attack the vault.** Press **Run all six**: the page signs six thefts with the agent's published private key and shows how each is stopped.
 
-```bash
-cargo test --workspace          # → test result: ok. 31 passed (vault) + 2 passed (token)
-cd ts && npm ci && npm test     # → 4 pass: the TS-signed quote fixture matches what Rust verifies
-```
+The live vault's full record is on the same page. The only server involved is the two demo sellers (`ts/src/sellers.ts`), which answer quote and delivery requests as any seller would; it holds the sellers' keys and nothing else. Every decision is made by the contract.
 
-### 2. Build the contracts
+The same thing from a terminal (Node 22+):
 
 ```bash
-./scripts/build.sh              # → wasm/almoner_vault.wasm, wasm/almoner_test_usdc.wasm
+git clone https://github.com/phoenix-2203/almoner && cd almoner/ts && npm ci && npm run attack
 ```
 
-CI also builds both files on every push and uploads them as the `wasm` artifact. If your local build fails, download the artifact into `./wasm`.
+### B. The whole night shift on your own vault (about 5 minutes)
 
-### 3. Deploy and set everything up on testnet (one command)
+You need Node 22+ only. No wallet and no Rust toolchain: the contracts in `./wasm` are prebuilt by this repository's CI from the source in `contracts/`.
 
 ```bash
-cd ts
-cp .env.example .env            # set OWNER_ACCOUNT_ID and OWNER_PRIVATE_KEY (testnet!)
-npm run bootstrap
+cd almoner/ts && npm ci
+npm run new-account             # → Created almoner-xxxxxxxx.testnet with 10 test NEAR. Key saved to ts/.env.
+npm run bootstrap               # deploys both contracts and sets everything up
 ```
 
-You should see:
+`npm run new-account` asks NEAR's public testnet faucet for a fresh funded account. To use your own testnet account instead (about 9 NEAR), copy `ts/.env.example` to `ts/.env` and fill it in.
+
+`npm run bootstrap` should print:
 
 ```
   + created tusdc.<you>.testnet / vault.<you>.testnet / datadesk.<you>.testnet / junkdata.<you>.testnet
@@ -151,7 +151,17 @@ You should see:
 
 Keys for the accounts it creates are saved to `ts/.almoner/state.json` (gitignored, mode 600). Re-running `bootstrap` skips steps that are already done.
 
-### 4. Run the night shift
+### C. Tests, and building the contracts yourself
+
+```bash
+cargo test --workspace          # → test result: ok. 31 passed (vault) + 2 passed (token)
+cd ts && npm test               # → 4 pass: the TS-signed quote fixture matches what Rust verifies
+./scripts/build.sh              # → rebuilds wasm/almoner_vault.wasm and wasm/almoner_test_usdc.wasm
+```
+
+Building needs Rust ≥ 1.95 with `wasm32-unknown-unknown` and [cargo-near](https://github.com/near/cargo-near); `rust-toolchain.toml` sets the toolchain. CI runs all of this on every push.
+
+### D. Run the night shift (after B)
 
 ```bash
 npm run sellers                 # terminal 1: DataDesk + JunkData on :8787
@@ -167,11 +177,13 @@ seller JunkData: delivery score 0% over 1 settled · ON HOLD
 decision log: N entries, hash chain verified on-chain: true
 ```
 
-### 5. Look at it
+### E. Look at it
 
 ```bash
-npx serve ../web                # or open web/index.html; bootstrap wrote web/config.js
+npx serve ../web                # then open http://localhost:3000/try.html#live (bootstrap wrote web/config.js)
 ```
+
+The "Live vault" part of that page shows **your** vault. Its attack console always targets the public challenge vault, because that is the one whose key is published.
 
 The dashboard reads the vault straight from NEAR RPC, with no backend. It shows:
 - Every decision with its reason
@@ -181,7 +193,17 @@ The dashboard reads the vault straight from NEAR RPC, with no backend. It shows:
 
 To view another vault, add `?vault=<account>` to the URL.
 
-### 6. Owner actions
+### Hosting the hands-on shop yourself
+
+```bash
+npm run shop:setup              # signs the "Open shop" task, publishes its agent key in shop.json
+git add ../shop.json && git commit -m "chore: publish the shop key" && git push
+bash ../scripts/deploy-vps.sh root@your-server your.domain   # static site + the sellers' server behind /api
+```
+
+Run `npm run shop:setup` again any time: it replaces a key that is low on gas, tops up the task's budget and clears holds on the demo sellers.
+
+### F. Owner actions
 
 ```bash
 npm run owner -- status
