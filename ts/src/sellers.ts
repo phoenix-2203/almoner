@@ -20,6 +20,8 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import type { KeyPairString } from "near-api-js";
 import { AlmonerVault, newNonce, sha256hex, signQuote, usdc, type Quote } from "./sdk.js";
 import { existsSync, readFileSync } from "node:fs";
+import { Account, KeyPair } from "near-api-js";
+import { agentStep, relayEnabled } from "./relay.js";
 import { loadState, RPC } from "./config.js";
 
 export interface CatalogItem {
@@ -101,12 +103,12 @@ function limited(req: IncomingMessage, perMinute = 40): boolean {
   return ++h.n > perMinute;
 }
 
-const readBody = (req: IncomingMessage) =>
+const readBody = (req: IncomingMessage, max = 8192) =>
   new Promise<any>((resolve) => {
     let d = "";
     req.on("data", (c) => {
       d += c;
-      if (d.length > 8192) req.destroy();
+      if (d.length > max) req.destroy();
     });
     req.on("end", () => {
       try {
@@ -117,9 +119,40 @@ const readBody = (req: IncomingMessage) =>
     });
   });
 
+const VAULT_ID = /^[a-z0-9][a-z0-9._-]{1,58}\.testnet$/;
+const ip = (req: IncomingMessage) => String(req.headers["x-forwarded-for"] ?? req.socket.remoteAddress ?? "").split(",")[0].trim();
+const TGAS = 1_000_000_000_000n;
+
 export function startSellers(port = Number(process.env.SELLERS_PORT ?? 8787)) {
   const state = loadSellerBook();
-  const vault = new AlmonerVault(state.vault, RPC);
+  const home = new AlmonerVault(state.vault, RPC);
+  // Quotes and deliveries are for the home vault unless a visitor names their own sandbox vault.
+  const vaultOf = (v: unknown) => (typeof v === "string" && v !== state.vault && VAULT_ID.test(v) ? new AlmonerVault(v, RPC) : home);
+  let token: string | null = null;
+  const joins = new Map<string, number>(); // sandbox vaults set up per address today
+  let joinDay = "";
+  let joinsToday = 0;
+  let busyJoin: Promise<unknown> = Promise.resolve(); // one at a time: the sellers' keys sign in sequence
+
+  /** A visitor's new sandbox vault: both demo sellers register on it and DataDesk sends it 5 tUSDC. */
+  async function join(vaultId: string) {
+    const v = new AlmonerVault(vaultId, RPC);
+    const info = await v.getVault();
+    token ??= (await home.getVault()).token;
+    if (info.token !== token) throw new Error("that vault uses a different token");
+    const known = await v.getSellers();
+    for (const [name, s] of Object.entries(state.sellers)) {
+      if (known.some((x) => x.account_id === s.accountId)) continue;
+      await v.seller(s.accountId, s.key).register(name === "datadesk" ? "DataDesk" : "JunkData", KeyPair.fromString(s.quoteKey).getPublicKey().toString(), name === "datadesk" ? "Market data and reports for agents." : "Cheap data. Very cheap.");
+    }
+    if (BigInt(info.balance) === 0n) {
+      const d = state.sellers.datadesk;
+      const acct = new Account(d.accountId, RPC, d.key);
+      await acct.callFunction({ contractId: token, methodName: "faucet", args: { amount: usdc(5) }, gas: 30n * TGAS });
+      await acct.callFunction({ contractId: token, methodName: "ft_transfer_call", args: { receiver_id: vaultId, amount: usdc(5), msg: "" }, deposit: 1n, gas: 100n * TGAS });
+    }
+    return { ok: true, funded: "5 tUSDC", sellers: Object.fromEntries(Object.entries(state.sellers).map(([k, x]) => [k, x.accountId])) };
+  }
 
   const server = createServer(async (req, res) => {
     try {
@@ -128,8 +161,43 @@ export function startSellers(port = Number(process.env.SELLERS_PORT ?? 8787)) {
         return res.end();
       }
       const [, name, action] = (req.url ?? "").split("?")[0].split("/");
-      if (name === "health") return json(res, 200, { ok: true, vault: state.vault, sellers: Object.fromEntries(Object.entries(state.sellers).map(([k, v]) => [k, v.accountId])) });
+      if (name === "health") return json(res, 200, { ok: true, ai: relayEnabled(), vault: state.vault, sellers: Object.fromEntries(Object.entries(state.sellers).map(([k, v]) => [k, v.accountId])) });
       if (limited(req)) return json(res, 429, { error: "Too many requests from this address; wait a minute." });
+
+      // ---- Sandbox: a visitor's own vault, and the AI agent that shops through it ----
+      if (name === "agent" && req.method === "GET") return json(res, 200, { enabled: relayEnabled() });
+      if (name === "agent" && req.method === "POST") {
+        try {
+          const body = await readBody(req, 80_000);
+          return json(res, 200, await agentStep(ip(req), body.messages));
+        } catch (e: any) {
+          return json(res, e?.status ?? 500, { error: String(e?.message ?? e) });
+        }
+      }
+      if (name === "sandbox" && req.method === "POST" && action === "account") {
+        // Ask NEAR's testnet faucet for a funded account on the visitor's behalf (their browser made the key).
+        const body = await readBody(req);
+        if (!/^almoner-sbx-[a-f0-9]{8}\.testnet$/.test(String(body.newAccountId)) || !/^ed25519:[1-9A-HJ-NP-Za-km-z]{40,50}$/.test(String(body.newAccountPublicKey))) return json(res, 400, { error: "bad account request" });
+        const r = await fetch("https://helper.nearprotocol.com/account", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ newAccountId: body.newAccountId, newAccountPublicKey: body.newAccountPublicKey }), signal: AbortSignal.timeout(60_000) });
+        return json(res, r.ok ? 200 : 502, r.ok ? { ok: true } : { error: `the testnet faucet answered ${r.status}` });
+      }
+      if (name === "sandbox" && req.method === "POST" && action === "join") {
+        const body = await readBody(req);
+        if (!VAULT_ID.test(String(body.vault))) return json(res, 400, { error: "bad vault id" });
+        const d = new Date().toISOString().slice(0, 10);
+        if (d !== joinDay) {
+          joinDay = d;
+          joinsToday = 0;
+          joins.clear();
+        }
+        const mine = joins.get(ip(req)) ?? 0;
+        if (mine >= 4 || joinsToday >= 200) return json(res, 429, { error: "Sandbox limit reached for today. You can still use the shared shop on the Try it page." });
+        joins.set(ip(req), mine + 1);
+        joinsToday++;
+        const run = busyJoin.then(() => join(body.vault));
+        busyJoin = run.catch(() => {});
+        return json(res, 200, await run);
+      }
       const s = state.sellers[name];
       const catalog = CATALOG[name];
       if (!s || !catalog) return json(res, 404, { error: "unknown seller" });
@@ -163,11 +231,12 @@ export function startSellers(port = Number(process.env.SELLERS_PORT ?? 8787)) {
           expires_at_ms: Date.now() + 10 * 60_000,
           nonce: newNonce(),
         };
-        return json(res, 200, { ...signQuote(state.vault, quote, s.quoteKey), note, list: entry.list });
+        return json(res, 200, { ...signQuote(vaultOf(body.vault).vaultId, quote, s.quoteKey), note, list: entry.list });
       }
 
       if (req.method === "POST" && action === "fulfil") {
         const body = await readBody(req);
+        const vault = vaultOf(body.vault);
         const p = await vault.getPurchase(Number(body.purchase_id));
         if (!p) return json(res, 404, { error: "no such purchase" });
         if (p.seller !== s.accountId) return json(res, 403, { error: "not our purchase" });
