@@ -18,7 +18,7 @@ const { execFileSync } = require("child_process");
 
 const arg = (k, d) => { const i = process.argv.indexOf("--" + k); return i > 0 ? process.argv[i + 1] : d; };
 const BASE = arg("base", "https://almoner.duckdns.org").replace(/\/$/, "");
-const ONLY = arg("only", "attack,sandbox,term").split(",");
+const ONLY = arg("only", "attack,tamper,sandbox,term").split(",");
 const MOCK = arg("mock", null); // test hook: a module that installs fake network routes
 const GAP = Number(process.env.GAP_MS || 20000); // spacing between chat messages for the model provider's rate limit
 const RAW = path.join(__dirname, "raw");
@@ -133,6 +133,29 @@ async function clip(browser, name, fn) {
     mark("stop");
   });
 
+  // The agent edits the price in a seller-signed quote. No AI involved: this is the shared shop on the Try it page.
+  await clip(browser, "tamper", async ({ page, mark, wait, hover, click, show, seen }) => {
+    await page.goto(BASE + "/try.html", { waitUntil: "networkidle" });
+    await page.locator(".item-opt").first().waitFor({ state: "visible", timeout: 45000 });
+    await show("#bench", 84, 1000); await wait(500); mark("start");
+    await click("#shopQuote");
+    await page.locator("#shopQuoteOut").waitFor({ state: "visible", timeout: 30000 });
+    await page.waitForFunction(() => document.getElementById("shopQuoteJson").value.includes("signature"), null, { timeout: 30000 });
+    await show("#shopQuoteJson", 130, 1100); await wait(700);
+    await click("#shopQuoteJson"); mark("edit");
+    seen.priceBefore = await page.evaluate(() => (document.getElementById("shopQuoteJson").value.match(/"price": "(\d+)"/) || [])[1]);
+    await page.evaluate(() => { const t = document.getElementById("shopQuoteJson"); t.value = t.value.replace(/"price": "\d+"/, '"price": "1000"'); t.dispatchEvent(new Event("input", { bubbles: true }));
+      const i = t.value.indexOf('"price"'); t.focus(); t.setSelectionRange(i, i + 15); t.style.transition = "box-shadow .3s"; t.style.boxShadow = "0 0 0 4px #f25c0a"; setTimeout(() => (t.style.boxShadow = ""), 1400); });
+    seen.priceAfter = await page.evaluate(() => (document.getElementById("shopQuoteJson").value.match(/"price": "(\d+)"/) || [])[1]);
+    if (seen.priceAfter !== "1000" || seen.priceBefore === "1000") throw new Error("the price in the quote was not edited");
+    await wait(1900);
+    await click("#shopBuy"); mark("ask");
+    await page.waitForFunction(() => /chip/.test(document.getElementById("shopDecision").innerHTML), null, { timeout: 90000 });
+    seen.tamper = /QUOTE_INVALID/.test(await page.locator("#shopDecision").innerText());
+    await show("#shopDecision", null, 900); await wait(2800);
+    mark("stop");
+  });
+
   // A visitor's own vault, a real AI agent, and the owner's controls.
   await clip(browser, "sandbox", async ({ page, mark, wait, hover, click, show, seen }) => {
     const chatDone = async () => { await page.waitForFunction(() => !document.getElementById("chatSend").disabled, null, { timeout: 180000 }); await wait(900); };
@@ -160,6 +183,9 @@ async function clip(browser, name, fn) {
     await wait(GAP);
     t = await ask(1, "inject");
     seen.injectRefused = /REFUSED/.test(t) && /INTENT_MISMATCH/.test(t);
+    await wait(GAP);
+    t = await ask(3, "junk"); // the cheap seller delivers an empty file
+    seen.junkRefunded = /Refunded/.test(t);
     await wait(GAP);
     t = await ask(2, "hold");
     seen.holdWaiting = /WAITING FOR THE OWNER/.test(t);
