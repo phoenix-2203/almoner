@@ -94,17 +94,24 @@ export async function agentStep(visitor: string, messages: unknown): Promise<{ m
   perVisitor.set(visitor, used + 1);
   globalCalls++;
 
+  // A new request from the person must lead to a real attempt, never an answer from memory:
+  // the first step after they speak has to be a tool call. Later steps are free to reply in words.
+  let choice: "required" | "auto" = clean[clean.length - 1].role === "user" ? "required" : "auto";
   for (let attempt = 1; ; attempt++) {
     const res = await fetch(process.env.GROQ_URL ?? "https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: { "content-type": "application/json", authorization: `Bearer ${process.env.GROQ_API_KEY}` },
-      body: JSON.stringify({ model: process.env.GROQ_MODEL ?? "openai/gpt-oss-120b", messages: [{ role: "system", content: AGENT_PROMPT }, ...clean], tools: AGENT_TOOLS, tool_choice: "auto", temperature: 0.2, max_completion_tokens: 900 }),
+      body: JSON.stringify({ model: process.env.GROQ_MODEL ?? "openai/gpt-oss-120b", messages: [{ role: "system", content: AGENT_PROMPT }, ...clean], tools: AGENT_TOOLS, tool_choice: choice, temperature: 0.2, max_completion_tokens: 900 }),
       signal: AbortSignal.timeout(45_000),
     });
     const body: any = await res.json().catch(() => ({}));
     if (res.ok) {
       const m = body.choices?.[0]?.message ?? {};
       return { message: { role: "assistant", content: typeof m.content === "string" ? m.content : "", ...(Array.isArray(m.tool_calls) && m.tool_calls.length ? { tool_calls: m.tool_calls } : {}) }, left: cap - used - 1 };
+    }
+    if (res.status === 400 && choice === "required") {
+      choice = "auto"; // the provider couldn't force a tool call for this message; let the model answer freely
+      continue;
     }
     const retry = res.status === 429 || res.status >= 500 || (res.status === 400 && body?.error?.code === "tool_use_failed");
     if (attempt < 4 && retry) {
