@@ -13,7 +13,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 D = os.environ.get("KOKORO_DIR", ".")
 VOICE, SPEED = os.environ.get("VOICE", "bm_george"), float(os.environ.get("SPEED", "0.92"))
 # Spellings the voice reads correctly; subtitles keep the real words.
-SAY = {"Almoner": "Ahmoner", "testnet": "test net", "on-chain": "on chain"}
+SAY = {"Almoner": "Ahmoner", "testnet": "test net", "on-chain": "on chain", "MCP": "M C P", "SDK": "S D K"}
 k = Kokoro(os.path.join(D, "kokoro-v1.0.onnx"), os.path.join(D, "voices-v1.0.bin"))
 say = lambda s: re.sub("|".join(map(re.escape, SAY)), lambda m: SAY[m.group(0)], s)
 
