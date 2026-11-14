@@ -7,7 +7,7 @@ const FPS = 30;
   const key = cj ? JSON.parse(fs.readFileSync(cj, "utf8")).agentPrivateKey : "";
   if (!key) console.log("! challenge.json not found: the opening card will not show the key");
   const b = await chromium.launch(); const p = await b.newPage({ viewport: { width: 1920, height: 1080 } });
-  for (const c of ["open", "title", "how", "close"]) {
+  for (const c of ["open", "problem", "title", "how", "sdk", "close"]) {
     await p.goto("file://" + path.join(__dirname, "cards.html") + "?c=" + c + "&key=" + encodeURIComponent(key));
     await p.evaluate(() => document.fonts.ready);
     const dur = Number(await p.locator("#" + c).getAttribute("data-dur"));

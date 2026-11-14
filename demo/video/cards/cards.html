@@ -28,6 +28,8 @@ h2{font-size:66px;line-height:1.08;letter-spacing:-.03em;font-weight:700;margin:
 .foot{margin-top:46px;font:400 27px "JB Mono",monospace;color:var(--mut)}
 .logo{width:150px;height:150px;border-radius:38px;background:var(--acc);position:relative;flex:none}.logo::before{content:"";position:absolute;left:50%;top:27%;width:46px;height:46px;margin-left:-23px;border-radius:50%;background:var(--bg)}.logo::after{content:"";position:absolute;left:50%;top:46%;margin-left:-26px;border:26px solid transparent;border-bottom:52px solid var(--bg);border-top:0}
 .brand{display:flex;align-items:center;gap:36px;margin-bottom:56px}.brand span{font-size:120px;font-weight:700;letter-spacing:-.04em}
+.code{margin:0;font:400 27px/1.62 "JB Mono",monospace;color:#dedcd6;white-space:pre}.code span{display:inline-block}.code i{font-style:normal;color:#ff8a3d}.code u{text-decoration:none;color:#8fd18f}.code em{font-style:normal;color:#8a8882}
+.logo[style*="230px"]::before{width:70px;height:70px;margin-left:-35px}.logo[style*="230px"]::after{margin-left:-40px;border-width:0 40px 80px 40px}
 .stats{display:flex;gap:26px;margin-bottom:70px}.stat{flex:1;background:var(--card);border:1px solid var(--line);border-radius:24px;padding:34px 36px}.stat b{display:block;font-size:92px;letter-spacing:-.04em;line-height:1;color:var(--acc)}.stat span{display:block;font-size:30px;margin-top:14px;color:var(--mut)}
 </style></head><body>
 
@@ -43,21 +45,52 @@ h2{font-size:66px;line-height:1.08;letter-spacing:-.03em;font-weight:700;margin:
   <h1><span class="a" style="--d:1.7;display:inline-block">Agents can ask.</span><br><span class="a" style="--d:3.2;display:inline-block">They can never <em>take</em>.</span></h1>
 </section>
 
-<section class="card" id="how" data-dur="9.6">
+<section class="card" id="problem" data-dur="8.6">
+  <div class="k a" style="--d:.2">The problem</div>
+  <h2 class="a" style="--d:.4">Give an agent a wallet,<br>and it can be <em>emptied</em>.</h2>
+  <div class="flow" style="gap:26px">
+    <div class="node a" style="--d:2.3;min-height:200px"><small>01</small><b>One leaked key</b><p>Whoever holds the key holds the money.</p></div>
+    <div class="node a" style="--d:4.1;min-height:200px"><small>02</small><b>One poisoned web page</b><p>A hidden instruction, and the agent buys what it was told to.</p></div>
+    <div class="node a" style="--d:7.5;min-height:200px"><small>AND A SPENDING LIMIT?</small><b>Only caps the damage</b><p>It doesn't stop the wrong purchase.</p></div>
+  </div>
+</section>
+
+<section class="card" id="how" data-dur="13.8">
   <div class="k a" style="--d:.2">How it works</div>
   <h2 class="a" style="--d:.4">The agent never holds money.</h2>
   <div class="flow">
-    <div class="node a" style="--d:7.3"><small>OWNER</small><b>Signs the rules</b><p>Budget, limits, sellers, and what must never be bought.</p></div><div class="arr a" style="--d:7.5">→</div>
+    <div class="node a" style="--d:12.6"><small>OWNER</small><b>Signs the rules</b><p>Budget, limits, sellers, and what must never be bought.</p></div><div class="arr a" style="--d:12.8">→</div>
     <div class="node hot a" style="--d:2.6"><small>VAULT · NEAR CONTRACT</small><b>Holds the funds</b><p>Checks every request against the signed rules. Decides on-chain.</p></div><div class="arr a" style="--d:4.0">→</div>
-    <div class="node a" style="--d:4.2"><small>AGENT · FUNCTION-CALL KEY</small><b>Can only ask</b><div class="li"><div class="ok a" style="--d:5.0">✓ ask to buy</div><div class="x a" style="--d:5.5">✗ transfer</div><div class="x a" style="--d:5.9">✗ add keys</div></div></div>
+    <div class="node a" style="--d:4.2"><small>AGENT · FUNCTION-CALL KEY</small><b>Can only ask</b><div class="li"><div class="ok a" style="--d:5.6">✓ ask to buy</div><div class="x a" style="--d:7.2">✗ transfer</div><div class="x a" style="--d:8.7">✗ add keys</div></div></div>
   </div>
-  <div class="foot a" style="--d:8.4">The ✗ lines are enforced by the NEAR protocol itself.</div>
+  <div class="foot a" style="--d:10.4">The ✗ lines are enforced by the NEAR protocol itself.</div>
 </section>
 
-<section class="card" id="close" data-dur="7.4">
-  <div class="stats"><div class="stat a" style="--d:.4"><b>45</b><span>contract tests, run on every push</span></div><div class="stat a" style="--d:2.6"><b>100%</b><span>of decisions recorded on-chain, refusals included</span></div></div>
-  <div class="brand" style="margin-bottom:34px"><div class="logo pop" style="--d:4.6"></div><span class="a" style="--d:4.8">Almoner</span></div>
-  <div class="foot a" style="--d:5.7;margin-top:0">almoner.duckdns.org &nbsp;·&nbsp; github.com/phoenix-2203/almoner &nbsp;·&nbsp; Built at NEAR HACKATHON</div>
+<section class="card" id="sdk" data-dur="11.4">
+  <div style="display:flex;gap:40px;align-items:stretch">
+    <div style="flex:0 0 430px;display:flex;flex-direction:column;gap:26px">
+      <div class="stat a" style="--d:.4"><b>45</b><span>contract tests, run on every push</span></div>
+      <div class="stat a" style="--d:2.6"><b>100%</b><span>of decisions on-chain, refusals included</span></div>
+      <div class="stat a" style="--d:9.9"><b>MCP</b><span>any AI client can be the agent</span></div>
+    </div>
+    <div class="keybox a" style="--d:4.7;flex:1;margin:0;display:flex;flex-direction:column;justify-content:center"><div class="lab">almoner-sdk · TypeScript</div>
+<pre class="code"><span class="a" style="--d:5.1"><i>import</i> { AlmonerVault } <i>from</i> <u>"almoner-sdk"</u>;</span>
+
+<span class="a" style="--d:5.7"><i>const</i> vault = <i>new</i> AlmonerVault(<u>"vault.you.testnet"</u>, rpc);</span>
+<span class="a" style="--d:6.3"><i>const</i> agent = vault.agent(agentKey);  <em>// a key that can only ask</em></span>
+
+<span class="a" style="--d:7.0"><i>const</i> p = <i>await</i> agent.requestPurchase({</span>
+<span class="a" style="--d:7.3">  task_id, mandate_hash, signed: quote, reason,</span>
+<span class="a" style="--d:7.6">});</span>
+<span class="a" style="--d:8.2"><em>// p.status: "Escrowed" | "PendingApproval" | "Declined"</em></span></pre></div>
+  </div>
+</section>
+
+<section class="card" id="close" data-dur="3.4" style="align-items:center;text-align:center">
+  <div class="logo pop" style="--d:.2;width:230px;height:230px;border-radius:58px;margin-bottom:44px"></div>
+  <h1 class="a" style="--d:.45;font-size:150px">Almoner</h1>
+  <div class="a" style="--d:1.2;font-size:54px;font-weight:600;letter-spacing:-.02em;margin-top:18px;color:var(--mut)">Built on <span style="color:var(--acc)">NEAR</span></div>
+  <div class="foot a" style="--d:2.0;margin-top:70px">almoner.duckdns.org &nbsp;·&nbsp; github.com/phoenix-2203/almoner &nbsp;·&nbsp; Built for NEAR HACKATHON</div>
 </section>
 
 <script>
