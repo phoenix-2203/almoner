@@ -3,6 +3,9 @@ on: [push, pull_request, workflow_dispatch]
 jobs:
   contracts:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -10,7 +13,7 @@ jobs:
           targets: wasm32-unknown-unknown
           components: clippy
       - uses: Swatinem/rust-cache@v2
-      - name: Unit tests (31 vault scenarios + token)
+      - name: Unit tests (45 vault scenarios + token)
         run: cargo test --workspace
       - name: Clippy
         run: cargo clippy --workspace --all-targets -- -D warnings -A clippy::explicit-counter-loop
@@ -22,6 +25,15 @@ jobs:
         with:
           name: wasm
           path: wasm/*.wasm
+      - name: Commit the built contracts back to the repository
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f wasm/*.wasm
+          if git diff --cached --quiet; then echo "contracts unchanged"; exit 0; fi
+          git commit -m "build: contracts built by CI from ${GITHUB_SHA::7}"
+          git push origin HEAD:main || echo "main moved on; the next run will commit them"
   ts:
     runs-on: ubuntu-latest
     defaults:
