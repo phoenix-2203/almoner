@@ -1,0 +1,13 @@
+{
+  "name": "almoner-demo-video",
+  "private": true,
+  "description": "Records and assembles the Almoner demo video",
+  "scripts": {
+    "record": "node record.cjs",
+    "cards": "node cards/render.cjs",
+    "assemble": "python3 assemble.py"
+  },
+  "dependencies": {
+    "playwright": "^1.50.0"
+  }
+}
