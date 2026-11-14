@@ -1,0 +1,32 @@
+$ npm run team
+
+Owner issued the lead's key, with the right to delegate.
+
+1. Lead hands Scout a sub-mandate: 0.30 tUSDC, at most 0.20 per purchase.
+2. Scout hands Runner a sub-mandate: 0.20 tUSDC of its 0.30.
+
+3. Runner buys inside its sub-mandate, and the seller is paid:
+   Runner asks for 0.120 tUSDC → APPROVED, held in escrow  (decision #17)
+   Runner accepted the delivery; DataDesk was paid 0.120 tUSDC.
+   Runner asks for 0.060 tUSDC → APPROVED, held in escrow  (decision #18)
+
+4. Runner asks for more than its 0.20 allows:
+   Runner asks for 0.060 tUSDC → REFUSED SUB_MANDATE_BUDGET
+     Sub-mandate 'runner-165ce4' doesn't have enough budget left (purchases below it count against it).  (decision #19)
+
+5. Scout buys with what Runner left of Scout's 0.30, then asks for more:
+   Scout asks for 0.120 tUSDC → APPROVED, held in escrow  (decision #20)
+   Scout asks for 0.060 tUSDC → REFUSED SUB_MANDATE_BUDGET
+     Sub-mandate 'scout-165ce4' doesn't have enough budget left (purchases below it count against it).  (decision #21)
+
+6. Lead is bound only by the task the owner signed:
+   Lead asks for 0.060 tUSDC → APPROVED, held in escrow  (decision #22)
+
+7. Scout tries to hand out more than it has:
+   REFUSED by the vault: Contract panicked: a sub-mandate can only narrow: budget is above yours
+
+8. Lead cancels Scout. Runner, below Scout, stops too:
+   Runner asks for 0.060 tUSDC → REFUSED SUB_MANDATE_REVOKED
+     Sub-mandate 'runner-165ce4' or a link above it was revoked.  (decision #23)
+
+Owner settled 3 open purchases and deleted the team's keys. Task #4: 0.360 tUSDC spent of 2.00 tUSDC. Log intact: true
