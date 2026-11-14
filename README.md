@@ -207,6 +207,29 @@ bash ../scripts/deploy-vps.sh root@your-server your.domain   # static site + the
 
 Run `npm run shop:setup` again any time: it replaces a key that is low on gas, tops up the task's budget and clears holds on the demo sellers.
 
+### SDK
+
+`almoner-sdk` (the [`sdk/`](sdk/) folder) is a typed TypeScript client for the vault, built and ready to install from a clone: `npm install ./sdk`. Putting an agent behind a vault takes a few lines:
+
+```ts
+import { AlmonerVault } from "almoner-sdk";
+
+const vault = new AlmonerVault("vault.you.testnet", "https://rpc.testnet.fastnear.com");
+const agent = vault.agent(process.env.AGENT_KEY);        // the function-call key the vault issued
+
+const task = await vault.getTask(1);                      // the rules the owner signed
+const p = await agent.requestPurchase({
+  task_id: 1, mandate_hash: task.mandate_hash,
+  signed: quote,                                          // { quote, signature } from the seller
+  reason: "Needed for the brief", idempotency_key: "job-42",
+});
+// p.status: "Escrowed" | "PendingApproval" | "Reused" | "Declined", with p.code and p.detail
+
+if (p.status === "Escrowed") await agent.confirmDelivery(p.id, true);   // accept: the seller is paid
+```
+
+It also covers the owner (`vault.owner(...)`: tasks, agent keys, approvals, freeze), sellers (`vault.seller(...)`, `signQuote`), sub-agents (`agent.delegate`), every view, and a local mirror of the IntentLock checks. Full list: [`sdk/README.md`](sdk/README.md). The demos, the MCP server and the owner CLI in this repository are all built on it. It is not yet published to npm.
+
 ### Agents hiring agents
 
 An agent key issued with the right to delegate can hand part of its task to a sub-agent, and that sub-agent can do the same, up to three levels deep. The vault adds a function-call key for each sub-agent to its own account, so a sub-agent, like every Almoner agent, can only ask.
@@ -271,6 +294,7 @@ npm run owner -- lock-vault --yes   # optional: delete the vault's full-access k
 ## Repository layout
 
 ```
+sdk/                   almoner-sdk: the TypeScript SDK as an installable package (built from ts/src/sdk.ts)
 contracts/vault        Rust (near-sdk 5.30): the Almoner Vault + 45 unit tests
 contracts/vault/src/sub.rs  Sub-mandates: agents hiring agents
 contracts/test-token   Rust: tUSDC, a testnet NEP-141 token with a faucet
