@@ -325,7 +325,10 @@
     try {
       if (!aiOn) await scripted(text);
       else {
-        msgs.push({ role: "user", content: text });
+        // Tell the model what is true right now, so it never answers from an earlier refusal.
+        let now = "";
+        try { const v = await view("get_vault"); now = `\n\n[State right now, read from the chain: the vault is ${v.frozen ? "FROZEN" : "live (not frozen)"}; your agent key is ${st.agentLive ? "active" : "revoked"}. Anything said earlier in this chat may be out of date. Make a fresh attempt with the tools.]`; } catch (e) {}
+        msgs.push({ role: "user", content: text + now });
         for (let step = 0; step < 12; step++) {
           let r;
           try { r = await api("/agent", { messages: msgs }); }
