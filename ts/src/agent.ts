@@ -6,7 +6,7 @@
  * (or a prompt injection) decides, the vault re-checks the signed quote
  * against the mandate before any money is reserved.
  */
-import { AlmonerVault, preflight, sha256hex, type Purchase, type SellerView, type SignedQuote, type TaskView } from "./sdk.js";
+import { AlmonerVault, checkDelivery, preflight, type Purchase, type SellerView, type SignedQuote, type TaskView } from "./sdk.js";
 import { SELLERS_URL } from "./config.js";
 
 export interface Offer {
@@ -65,17 +65,7 @@ export async function negotiate(
 }
 
 /** A delivered result is acceptable if it hashes to what the seller committed on-chain and isn't junk. */
-export function checkDelivery(result: string, onChainHash: string | null): { ok: boolean; why: string } {
-  if (!onChainHash || sha256hex(result) !== onChainHash) return { ok: false, why: "result doesn't match the hash the seller committed on-chain" };
-  if (!result.trim()) return { ok: false, why: "empty body" };
-  try {
-    const j = JSON.parse(result);
-    if (j && typeof j === "object" && "error" in j) return { ok: false, why: `error message instead of data: ${j.error}` };
-  } catch {
-    return { ok: false, why: "not valid JSON" };
-  }
-  return { ok: true, why: "hash matches and content is data" };
-}
+export { checkDelivery } from "./sdk.js";
 
 /** Ask the seller to fulfil an escrowed purchase, verify, then accept or reject on-chain. */
 export async function collectAndReview(
