@@ -25,7 +25,29 @@ async function quoteFrom(seller: string, item: string, offer?: string) {
   return { quote: j.quote, signature: j.signature } as SignedQuote;
 }
 
+/** Stop early, with a clear message, unless the sellers at SELLERS_URL are the ones bootstrap set up for this vault. */
+async function checkSellers() {
+  const fix = `Start them with \`npm run sellers\` (on another port: SELLERS_PORT=8788 npm run sellers, then SELLERS_URL=http://localhost:8788 npm run demo).`;
+  let h: any;
+  try {
+    const r = await fetch(`${SELLERS_URL}/health`, { signal: AbortSignal.timeout(5000) });
+    h = await r.json();
+  } catch {
+    throw new Error(`No sellers answered at ${SELLERS_URL}. ${fix}`);
+  }
+  const want = Object.fromEntries(Object.entries(state.sellers).map(([k, v]) => [k, v.accountId]));
+  const mismatch = h?.vault !== state.vault.accountId || Object.entries(want).some(([k, id]) => h?.sellers?.[k] !== id);
+  if (mismatch) {
+    throw new Error(
+      `The sellers at ${SELLERS_URL} are not the ones for your vault ${state.vault.accountId} (they report ${h?.vault ? `vault ${h.vault}` : "no vault: an older or different server"}).\n` +
+        `They are probably left over from an earlier run or another clone. Stop that process, or run yours on another port:\n` +
+        `  SELLERS_PORT=8788 npm run sellers\n  SELLERS_URL=http://localhost:8788 npm run demo`,
+    );
+  }
+}
+
 async function main() {
+  await checkSellers();
   const task = (await vault.getTask(state.taskId))!;
   const run = Date.now().toString(36);
   const buy = (signed: SignedQuote, reason: string, key: string) =>
