@@ -168,7 +168,7 @@ Keys for the accounts it creates are saved to `ts/.almoner/state.json` (gitignor
 
 ```bash
 cargo test --workspace          # → test result: ok. 45 passed (vault) + 2 passed (token)
-cd ts && npm test               # → 4 pass: the TS-signed quote fixture matches what Rust verifies
+cd ts && npm test               # → 8 pass: the TS-signed quote fixture matches what Rust verifies, IntentLock mirror, SDK errors
 ./scripts/build.sh              # → rebuilds wasm/almoner_vault.wasm and wasm/almoner_test_usdc.wasm
 ```
 
@@ -180,6 +180,8 @@ Building needs Rust ≥ 1.95 with `wasm32-unknown-unknown` and [cargo-near](http
 npm run sellers                 # terminal 1: DataDesk + JunkData on :8787
 npm run demo                    # terminal 2: the 8 steps above, live on testnet
 ```
+
+If port 8787 is taken, `npm run sellers` says so and stops: use `SELLERS_PORT=8788 npm run sellers` and `SELLERS_URL=http://localhost:8788 npm run demo`. The demo checks first that the sellers it reaches belong to your vault.
 
 The demo ends with a morning report:
 
