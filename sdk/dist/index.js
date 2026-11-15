@@ -63,21 +63,33 @@ var AlmonerVault = class {
   vaultId;
   rpcUrl;
   provider;
+  /** Call any view method on the vault. */
   view(method, args = {}) {
     return this.provider.callFunction({ contractId: this.vaultId, method, args });
   }
+  /** Vault totals. */
   getVault = () => this.view("get_vault");
+  /** One task, or null. */
   getTask = (task_id) => this.view("get_task", { task_id });
+  /** All tasks. */
   getTasks = () => this.view("get_tasks");
+  /** All agent keys issued by the owner. */
   getAgents = () => this.view("get_agents");
+  /** All registered sellers. */
   getSellers = () => this.view("get_sellers");
+  /** One seller, or null. */
   getSeller = (account_id) => this.view("get_seller", { account_id });
+  /** One purchase, or null. */
   getPurchase = (purchase_id) => this.view("get_purchase", { purchase_id });
+  /** The most recent purchases. */
   getPurchases = (limit = 50) => this.view("get_purchases", { limit });
+  /** Log entries from an index. */
   getLog = (from_index = 0, limit = 200) => this.view("get_log", { from_index, limit });
+  /** True if the on-chain log's hash chain is intact. */
   verifyLog = () => this.view("verify_log");
   /** Sub-mandates handed out by agents. Empty on a vault whose contract predates them. */
   getSubMandates = () => this.view("get_sub_mandates").catch(() => []);
+  /** The exact mandate JSON a task's mandate_hash commits to. */
   getMandateJson = (task_id) => this.view("get_mandate_json", { task_id });
   /** Remaining gas allowance (yoctoNEAR) of a function-call key on the vault, or null if the key is gone. */
   async keyAllowance(publicKey) {
@@ -160,19 +172,127 @@ var AlmonerVault = class {
     };
   }
 };
+var AlmonerError = class extends Error {
+  /** Machine-readable category of the failure. */
+  kind;
+  /** The underlying error, if any. */
+  cause;
+  constructor(kind, message, cause) {
+    super(message);
+    this.name = "AlmonerError";
+    this.kind = kind;
+    this.cause = cause;
+  }
+};
+function toAlmonerError(e) {
+  if (e instanceof AlmonerError) return e;
+  const m = String(e?.message ?? e);
+  const type = String(e?.type ?? e?.cause?.name ?? "");
+  const all = `${type} ${m}`;
+  if (/NotEnoughAllowance|allowance/i.test(all)) return new AlmonerError("out_of_gas", "the agent key's gas allowance is used up; issue a new key", e);
+  if (/AccessKeyDoesNotExist|InvalidAccessKey|access key .*does not exist|Can't complete the action because access key/i.test(all))
+    return new AlmonerError("revoked_key", "the agent key does not exist on the vault (revoked or never issued)", e);
+  if (/fetch failed|ECONNREFUSED|ENOTFOUND|ETIMEDOUT|EAI_AGAIN|network|socket/i.test(all)) return new AlmonerError("network", m, e);
+  return new AlmonerError("contract", m, e);
+}
+function checkDelivery(result, onChainHash) {
+  if (!onChainHash || sha256hex(result) !== onChainHash) return { ok: false, why: "result doesn't match the hash the seller committed on-chain" };
+  if (!result.trim()) return { ok: false, why: "empty body" };
+  try {
+    const j = JSON.parse(result);
+    if (j && typeof j === "object" && "error" in j) return { ok: false, why: `error message instead of data: ${j.error}` };
+  } catch {
+    return { ok: false, why: "not valid JSON" };
+  }
+  return { ok: true, why: "hash matches and content is data" };
+}
+async function postJson(url, body) {
+  let r;
+  try {
+    r = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+  } catch (e) {
+    throw new AlmonerError("network", `could not reach ${url}`, e);
+  }
+  let j;
+  try {
+    j = await r.json();
+  } catch (e) {
+    throw new AlmonerError("seller", `${url} answered ${r.status} without JSON`, e);
+  }
+  if (!r.ok) throw new AlmonerError("seller", j?.error ?? `${url} answered ${r.status}`);
+  return j;
+}
+function getQuote(sellerUrl, item, opts = {}) {
+  return postJson(`${sellerUrl.replace(/\/$/, "")}/quote`, { item, ...opts });
+}
+async function buy(vault, agentKey, o) {
+  const agent = vault.agent(agentKey);
+  const quote = await getQuote(o.sellerUrl, o.item, { ...o.offer ? { offer: o.offer } : {}, vault: vault.vaultId });
+  let p;
+  try {
+    const task = await vault.getTask(o.taskId);
+    if (!task) throw new AlmonerError("contract", `task ${o.taskId} does not exist on ${vault.vaultId}`);
+    p = await agent.requestPurchase({
+      task_id: o.taskId,
+      mandate_hash: task.mandate_hash,
+      signed: { quote: quote.quote, signature: quote.signature },
+      reason: o.reason,
+      idempotency_key: o.idempotencyKey ?? newNonce()
+    });
+  } catch (e) {
+    throw toAlmonerError(e);
+  }
+  const out = (purchase, extra = {}) => ({
+    paid: ["Paid", "Delivered", "PayoutPending"].includes(purchase.status),
+    status: purchase.status,
+    code: p.code,
+    detail: p.detail,
+    purchase,
+    quote,
+    ...extra
+  });
+  if (p.status !== "Escrowed") return out(p);
+  const { result } = await postJson(`${o.sellerUrl.replace(/\/$/, "")}/fulfil`, { purchase_id: p.id, vault: vault.vaultId });
+  try {
+    const delivered = await vault.getPurchase(p.id);
+    const review = (o.check ?? checkDelivery)(result, delivered.result_hash);
+    const final = await agent.confirmDelivery(p.id, review.ok, review.ok ? void 0 : review.why);
+    return out(final, { result, review });
+  } catch (e) {
+    throw toAlmonerError(e);
+  }
+}
+async function setupAgent(vault, ownerId, ownerKey, rules, agentName, opts = {}) {
+  const owner = vault.owner(ownerId, ownerKey);
+  const kp = KeyPair.fromRandom("ed25519");
+  const publicKey = kp.getPublicKey().toString();
+  try {
+    const task = await owner.createTask(rules);
+    await owner.addAgent(publicKey, agentName, [task.id], opts.allowanceYocto, opts.canDelegate ?? false);
+    return { task, agentKey: kp.toString(), publicKey };
+  } catch (e) {
+    throw toAlmonerError(e);
+  }
+}
 export {
+  AlmonerError,
   AlmonerVault,
   TGAS,
   USDC_DECIMALS,
+  buy,
+  checkDelivery,
   explorerAccount,
   explorerTx,
   fmtNear,
   fmtUsdc,
+  getQuote,
   newNonce,
   normalize,
   preflight,
   quoteMessage,
+  setupAgent,
   sha256hex,
   signQuote,
+  toAlmonerError,
   usdc
 };

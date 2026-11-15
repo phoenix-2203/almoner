@@ -6,13 +6,36 @@
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
-  "files": ["dist", "README.md"],
-  "repository": { "type": "git", "url": "git+https://github.com/phoenix-2203/almoner.git", "directory": "sdk" },
-  "keywords": ["near", "ai-agents", "agent-payments", "escrow", "function-call-keys"],
-  "engines": { "node": ">=20" },
-  "scripts": {
-    "build": "node build.mjs"
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
   },
-  "peerDependencies": { "near-api-js": "^7.5.3" }
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/phoenix-2203/almoner.git",
+    "directory": "sdk"
+  },
+  "keywords": [
+    "near",
+    "ai-agents",
+    "agent-payments",
+    "escrow",
+    "function-call-keys"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "bash test-pack.sh"
+  },
+  "peerDependencies": {
+    "near-api-js": "^7.5.3"
+  }
 }
