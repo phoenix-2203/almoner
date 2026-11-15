@@ -251,6 +251,16 @@ export function startSellers(port = Number(process.env.SELLERS_PORT ?? 8787)) {
       return json(res, 500, { error: String(e?.message ?? e) });
     }
   });
+  server.on("error", (e: NodeJS.ErrnoException) => {
+    if (e.code !== "EADDRINUSE") throw e;
+    console.error(
+      `Port ${port} is already in use, so the sellers can't start there. Another sellers process (maybe from an earlier run) or another app has it.\n` +
+        `Stop that process, or pick another port for both terminals:\n` +
+        `  SELLERS_PORT=8788 npm run sellers\n` +
+        `  SELLERS_URL=http://localhost:8788 npm run demo`,
+    );
+    process.exit(1);
+  });
   server.listen(port, process.env.SELLERS_HOST ?? "0.0.0.0", () => console.log(`sellers listening on http://localhost:${port} (datadesk, junkdata)`));
   return server;
 }
