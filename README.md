@@ -209,26 +209,26 @@ Run `npm run shop:setup` again any time: it replaces a key that is low on gas, t
 
 ### SDK
 
-`almoner-sdk` (the [`sdk/`](sdk/) folder) is a typed TypeScript client for the vault, built and ready to install from a clone: `npm install ./sdk`. Putting an agent behind a vault takes a few lines:
+`almoner-sdk` (the [`sdk/`](sdk/) folder) is a typed TypeScript client for the vault, built and committed so it installs from a clone (not yet on npm):
 
-```ts
-import { AlmonerVault } from "almoner-sdk";
-
-const vault = new AlmonerVault("vault.you.testnet", "https://rpc.testnet.fastnear.com");
-const agent = vault.agent(process.env.AGENT_KEY);        // the function-call key the vault issued
-
-const task = await vault.getTask(1);                      // the rules the owner signed
-const p = await agent.requestPurchase({
-  task_id: 1, mandate_hash: task.mandate_hash,
-  signed: quote,                                          // { quote, signature } from the seller
-  reason: "Needed for the brief", idempotency_key: "job-42",
-});
-// p.status: "Escrowed" | "PendingApproval" | "Reused" | "Declined", with p.code and p.detail
-
-if (p.status === "Escrowed") await agent.confirmDelivery(p.id, true);   // accept: the seller is paid
+```bash
+npm install near-api-js /path/to/almoner/sdk --install-links
 ```
 
-It also covers the owner (`vault.owner(...)`: tasks, agent keys, approvals, freeze), sellers (`vault.seller(...)`, `signQuote`), sub-agents (`agent.delegate`), every view, and a local mirror of the IntentLock checks. Full list: [`sdk/README.md`](sdk/README.md). The demos, the MCP server and the owner CLI in this repository are all built on it. It is not yet published to npm.
+One call puts an agent's purchase through the vault: quote, vault decision, delivery check, accept or reject on-chain.
+
+```ts
+import { AlmonerVault, buy } from "almoner-sdk";
+
+const vault = new AlmonerVault("vault.you.testnet", "https://rpc.testnet.fastnear.com");
+const r = await buy(vault, process.env.AGENT_KEY, {        // the function-call key the vault issued
+  sellerUrl: "https://seller.example/api/datadesk", item: "https://datadesk.example/data/near-intents-volume-daily",
+  taskId: 1, reason: "Volume data for the weekly report",
+});
+console.log(r.paid ? `paid #${r.purchase.id}` : `refused: ${r.code} ${r.detail}`);   // a refusal is data, not an exception
+```
+
+`setupAgent()` does the owner side in one call (create a task, issue an agent key), failures with no decision throw a typed `AlmonerError` (`revoked_key`, `out_of_gas`, `network`, ...), and the full client covers owners, sellers, sub-agents, every view and a local mirror of the IntentLock. [`sdk/README.md`](sdk/README.md) has every export, three examples with output from real testnet runs, and what the vault guarantees whatever the agent does. The demos, the MCP server and the owner CLI in this repository are built on the same source, [`ts/src/sdk.ts`](ts/src/sdk.ts).
 
 ### Agents hiring agents
 
