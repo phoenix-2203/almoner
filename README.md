@@ -142,15 +142,24 @@ npm run bootstrap               # deploys both contracts and sets everything up
 
 `npm run new-account` asks NEAR's public testnet faucet for a fresh funded account. To use your own testnet account instead (about 9 NEAR), copy `ts/.env.example` to `ts/.env` and fill it in.
 
-`npm run bootstrap` should print:
+`npm run bootstrap` should print (`<you>` is your account, `<mandate hash>` and the key differ on every vault):
 
 ```
-  + created tusdc.<you>.testnet / vault.<you>.testnet / datadesk.<you>.testnet / junkdata.<you>.testnet
-  + deployed tUSDC … + deployed Almoner Vault …
+Owner <you>.testnet on testnet via https://rpc.testnet.fastnear.com
+  + created tusdc.<you>.testnet (2.5 NEAR)
+  + created vault.<you>.testnet (5 NEAR)
+  + created datadesk.<you>.testnet (0.3 NEAR)
+  + created junkdata.<you>.testnet (0.3 NEAR)
+  + deployed tUSDC to tusdc.<you>.testnet
+  + deployed Almoner Vault to vault.<you>.testnet
   + funded vault with 20 tUSDC
-  + seller datadesk… registered, + seller junkdata… registered
-  + task #1 signed, mandate 9fc7abafc4270ffb…
+  + seller datadesk.<you>.testnet registered (5 catalog items)
+  + seller junkdata.<you>.testnet registered (2 catalog items)
+  + task #1 signed, mandate <mandate hash>…
   + agent key issued: ed25519:… (function-call only, 3 NEAR gas allowance)
+
+Done. Vault: vault.<you>.testnet
+Next: `npm run sellers` in one terminal, `npm run demo` in another.
 ```
 
 Keys for the accounts it creates are saved to `ts/.almoner/state.json` (gitignored, mode 600). Re-running `bootstrap` skips steps that are already done.
